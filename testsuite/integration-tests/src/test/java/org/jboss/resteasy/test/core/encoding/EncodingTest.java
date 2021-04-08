@@ -105,8 +105,8 @@ public class EncodingTest {
       String paramWithChar = "start" + toTest + "end";
       Response returned = testClient.getPathParam(paramWithChar);
       Assert.assertNotNull("Wrong returned value", returned);
-      Assert.assertEquals("Wrong returned status", returned.getStatus(), HttpURLConnection.HTTP_OK);
-      Assert.assertEquals("Wrong returned value", returned.readEntity(String.class), paramWithChar);
+      Assert.assertEquals("Wrong returned status", HttpURLConnection.HTTP_OK, returned.getStatus());
+      Assert.assertEquals("Wrong returned value", paramWithChar, returned.readEntity(String.class));
    }
 
    /**

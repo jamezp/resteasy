@@ -79,8 +79,7 @@
         <version.org.slf4j>1.7.29</version.org.slf4j>
         <version.org.wildfly.core.wildfly-cli>7.0.0.Final</version.org.wildfly.core.wildfly-cli>
         <version.org.wildfly.extras.creaper>1.6.1</version.org.wildfly.extras.creaper>
-        <version.org.wildfly.wildfly-arquillian-container-managed>2.2.0.Final</version.org.wildfly.wildfly-arquillian-container-managed>
-        <version.org.wildfly.wildfly-arquillian-container-bootable>3.0.0.Beta3</version.org.wildfly.wildfly-arquillian-container-bootable>
+        <version.org.wildfly.arquillian>3.0.1.Final</version.org.wildfly.arquillian>
         <version.org.yaml.snakeyaml>1.26</version.org.yaml.snakeyaml>
         <version.weld.api>3.1.SP3 </version.weld.api>
         <version.weld>3.1.5.Final</version.weld>
@@ -885,7 +884,7 @@
             <dependency>
                 <groupId>org.wildfly.arquillian</groupId>
                 <artifactId>wildfly-arquillian-container-managed</artifactId>
-                <version>${version.org.wildfly.wildfly-arquillian-container-managed}</version>
+                <version>${version.org.wildfly.arquillian}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>javax.inject</groupId>
@@ -896,7 +895,7 @@
             <dependency>
                 <groupId>org.wildfly.arquillian</groupId>
                 <artifactId>wildfly-arquillian-container-bootable</artifactId>
-                <version>${version.org.wildfly.wildfly-arquillian-container-bootable}</version>
+                <version>${version.org.wildfly.arquillian}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jboss.sasl</groupId>

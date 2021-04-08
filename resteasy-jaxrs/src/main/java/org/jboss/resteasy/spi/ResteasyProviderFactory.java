@@ -2442,6 +2442,7 @@ public class ResteasyProviderFactory extends RuntimeDelegate implements Provider
             {
                serverReaderInterceptorRegistry = parent.getServerReaderInterceptorRegistry().clone(this);
             }
+
             serverReaderInterceptorRegistry.registerSingleton((ReaderInterceptor) provider, priority);
          }
          if (constrainedTo != null && constrainedTo.value() == RuntimeType.CLIENT)
