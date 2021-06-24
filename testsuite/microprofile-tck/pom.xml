@@ -223,18 +223,4 @@
 
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>skip-mp-tck</id>
-      <activation>
-        <os>
-          <family>Windows</family>
-        </os>
-      </activation>
-      <properties>
-        <skip.mp.tck>true</skip.mp.tck>
-      </properties>
-    </profile>
-  </profiles>
 </project>
