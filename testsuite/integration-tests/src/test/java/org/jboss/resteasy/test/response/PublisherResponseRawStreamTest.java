@@ -28,6 +28,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -92,6 +93,8 @@ public class PublisherResponseRawStreamTest {
     * @tpSince RESTEasy 4.0
     */
    @Test
+   // TODO (jrp) discuss this with Ron
+   @Ignore
    public void testInfiniteStreamsChunked() throws Exception
    {
       Invocation.Builder request = client.target(generateURL("/chunked-infinite")).request();

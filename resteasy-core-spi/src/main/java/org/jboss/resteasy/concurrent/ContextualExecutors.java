@@ -71,6 +71,23 @@ public class ContextualExecutors {
     }
 
     /**
+     * Wraps the executor in contextual executor.
+     * <p>
+     * The context is copied in before each invocation of the delegate, then reset after the thread is done executing.
+     * </p>
+     *
+     * @param delegate the executor to wrap
+     *
+     * @return a new contextual executor
+     */
+    public static Executor wrap(final Executor delegate) {
+        if (delegate instanceof ContextualExecutor || delegate instanceof ContextualExecutorService) {
+            return delegate;
+        }
+        return new ContextualExecutor(delegate);
+    }
+
+    /**
      * Creates a new {@link ContextualExecutorService} or wraps the default {@code ManagedExecutorService} in a
      * Jakarta EE environment.
      * <p>
@@ -408,6 +425,19 @@ public class ContextualExecutors {
                 thread.setPriority(Thread.NORM_PRIORITY);
                 return thread;
             });
+        }
+    }
+
+    private static class ContextualExecutor implements Executor {
+        private final Executor delegate;
+
+        private ContextualExecutor(final Executor delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void execute(final Runnable command) {
+            delegate.execute(runnable(command));
         }
     }
 }

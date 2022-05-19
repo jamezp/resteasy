@@ -23,7 +23,8 @@ public interface AsyncClientHttpEngine extends ClientHttpEngine
     *
     * @param <T> Result-Type
     */
-   public interface ResultExtractor<T>
+   @FunctionalInterface
+   interface ResultExtractor<T>
    {
       /**
        * Extracts a result out of a Response

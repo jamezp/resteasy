@@ -8,6 +8,7 @@ import org.jboss.resteasy.test.util.SSLCerts;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.net.ssl.SSLContext;
@@ -26,6 +27,8 @@ import jakarta.ws.rs.core.MediaType;
  * @author Sebastian Łaskawiec
  * @see https://issues.jboss.org/browse/RESTEASY-1431
  */
+// TODO (jrp) this doesn't test much and the tests actually should be failing. The SSL connection errors are being swallowed
+@Ignore
 public class SniTest
 {
 

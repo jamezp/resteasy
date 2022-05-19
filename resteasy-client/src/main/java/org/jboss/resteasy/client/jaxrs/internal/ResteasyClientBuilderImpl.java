@@ -1,28 +1,5 @@
 package org.jboss.resteasy.client.jaxrs.internal;
 
-import org.apache.http.HttpHost;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpAsyncClient4Engine;
-import org.jboss.resteasy.client.jaxrs.engines.ClientHttpEngineBuilder43;
-import org.jboss.resteasy.client.jaxrs.i18n.LogMessages;
-import org.jboss.resteasy.client.jaxrs.i18n.Messages;
-import org.jboss.resteasy.client.jaxrs.spi.ClientConfigProvider;
-import org.jboss.resteasy.concurrent.ContextualExecutorService;
-import org.jboss.resteasy.concurrent.ContextualExecutors;
-import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryDelegate;
-import org.jboss.resteasy.plugins.interceptors.AcceptEncodingGZIPFilter;
-import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import jakarta.ws.rs.Priorities;
-import jakarta.ws.rs.RuntimeType;
-import jakarta.ws.rs.core.Configuration;
-
 import java.security.AccessController;
 import java.security.KeyStore;
 import java.security.PrivilegedActionException;
@@ -37,6 +14,30 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.RuntimeType;
+import jakarta.ws.rs.core.Configuration;
+
+import org.apache.http.HttpHost;
+import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
+import org.jboss.resteasy.client.jaxrs.ClientHttpEngineBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpAsyncClient4Engine;
+import org.jboss.resteasy.client.jaxrs.engines.HttpClientEngine;
+import org.jboss.resteasy.client.jaxrs.engines.HttpClientEngineBuilder;
+import org.jboss.resteasy.client.jaxrs.i18n.LogMessages;
+import org.jboss.resteasy.client.jaxrs.i18n.Messages;
+import org.jboss.resteasy.client.jaxrs.spi.ClientConfigProvider;
+import org.jboss.resteasy.concurrent.ContextualExecutorService;
+import org.jboss.resteasy.concurrent.ContextualExecutors;
+import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryDelegate;
+import org.jboss.resteasy.plugins.interceptors.AcceptEncodingGZIPFilter;
+import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 
 /**
  * Abstraction for creating Clients.  Allows SSL configuration.  Uses Apache Http Client under
@@ -91,6 +92,38 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
          }
          providerFactory = localProviderFactory;
       }
+   }
+
+   ResteasyClientBuilderImpl(final ResteasyClientBuilderImpl base) {
+      this.truststore = base.truststore;
+      this.clientKeyStore = base.clientKeyStore;
+      this.clientPrivateKeyPassword = base.clientPrivateKeyPassword;
+      this.disableTrustManager = base.disableTrustManager;
+      this.policy = base.policy;
+      this.providerFactory = base.providerFactory;
+      this.asyncExecutor = base.asyncExecutor;
+      this.scheduledExecutorService = base.scheduledExecutorService;
+      this.cleanupExecutor = base.cleanupExecutor;
+      this.sslContext = base.sslContext;
+      this.properties = new HashMap<>(base.properties);
+      this.httpEngine = base.httpEngine;
+      this.connectionPoolSize = base.connectionPoolSize;
+      this.maxPooledPerRoute = base.maxPooledPerRoute;
+      this.connectionTTL = base.connectionTTL;
+      this.connectionTTLUnit = base.connectionTTLUnit;
+      this.socketTimeout = base.socketTimeout;
+      this.socketTimeoutUnits = base.socketTimeoutUnits;
+      this.establishConnectionTimeout = base.establishConnectionTimeout;
+      this.establishConnectionTimeoutUnits = base.establishConnectionTimeoutUnits;
+      this.connectionCheckoutTimeoutMs = base.connectionCheckoutTimeoutMs;
+      this.verifier = base.verifier;
+      this.defaultProxy = base.defaultProxy;
+      this.responseBufferSize = base.responseBufferSize;
+      this.sniHostNames = new ArrayList<>(base.sniHostNames);
+      this.trustSelfSignedCertificates = base.trustSelfSignedCertificates;
+      this.cookieManagementEnabled = base.cookieManagementEnabled;
+      this.disableAutomaticRetries = base.disableAutomaticRetries;
+      this.followRedirects = base.followRedirects;
    }
 
    /**
@@ -266,7 +299,6 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
 
    public ResteasyClientBuilderImpl useAsyncHttpEngine()
    {
-      this.httpEngine = new ApacheHttpAsyncClient4Engine(HttpAsyncClients.createSystem(), true);
       return this;
    }
 
@@ -405,15 +437,22 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
          // check for proxy config parameters
          setProxyIfNeeded(config);
       }
+      final ContextualExecutorService executor = getExecutorService();
 
       for (Object p : getProviderFactory().getProviderInstances()) {
          if (p instanceof ClientHttpEngine) {
             httpEngine((ClientHttpEngine) p);
             break;
+         } else if (p instanceof ClientHttpEngineBuilder) {
+            httpEngine(((ClientHttpEngineBuilder) p).resteasyClientBuilder(this).executor(executor).build());
          }
       }
 
-      ClientHttpEngine engine = httpEngine != null ? httpEngine : new ClientHttpEngineBuilder43().resteasyClientBuilder(this).build();
+      //ClientHttpEngine engine = httpEngine != null ? httpEngine : new ClientHttpEngineBuilder43().resteasyClientBuilder(this).build();
+      ClientHttpEngine engine = httpEngine != null ? httpEngine : new HttpClientEngineBuilder()
+              .resteasyClientBuilder(this)
+              .executor(executor)
+              .build();
       if (resetProxy) {
          this.defaultProxy = null;
       }
@@ -421,7 +460,6 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
       if (serviceLoaderIterator.hasNext()) {
          config.register(new ClientConfigProviderFilter(serviceLoaderIterator.next()), Priorities.AUTHENTICATION);
       }
-      final ContextualExecutorService executor = getExecutorService();
       return createResteasyClient(engine, executor, !executor.isManaged(), ContextualExecutors.wrapOrLookup(scheduledExecutorService), config);
 
    }
@@ -630,7 +668,7 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
    @Override
    public boolean isUseAsyncHttpEngine()
    {
-      return httpEngine != null && (httpEngine instanceof ApacheHttpAsyncClient4Engine);
+      return httpEngine != null && (httpEngine instanceof ApacheHttpAsyncClient4Engine || httpEngine instanceof HttpClientEngine);
    }
 
    @Override
@@ -730,6 +768,11 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
    @Override
    public boolean isFollowRedirects() {
       return followRedirects;
+   }
+
+   @Override
+   public ResteasyClientBuilder toImmutable() {
+      return new ImmutableClientBuilder(this);
    }
 
    private ContextualExecutorService getExecutorService() {
