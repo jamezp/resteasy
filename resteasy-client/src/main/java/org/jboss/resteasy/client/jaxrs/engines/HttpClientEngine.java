@@ -21,13 +21,14 @@ package org.jboss.resteasy.client.jaxrs.engines;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.CookieManager;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.KeyStore;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
@@ -42,22 +43,33 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.X509TrustManager;
 
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.InvocationCallback;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.util.PublicSuffixMatcherLoader;
+import org.jboss.resteasy.client.jaxrs.ResponseHeaders;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.i18n.LogMessages;
 import org.jboss.resteasy.client.jaxrs.i18n.Messages;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 import org.jboss.resteasy.client.jaxrs.internal.ClientResponse;
+import org.jboss.resteasy.client.jaxrs.spi.ClientConfigProvider;
 import org.jboss.resteasy.concurrent.ContextualExecutors;
 import org.jboss.resteasy.util.CaseInsensitiveMap;
+import org.wildfly.security.ssl.SSLContextBuilder;
 
 /**
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
@@ -68,12 +80,14 @@ public class HttpClientEngine implements AsyncClientHttpEngine {
     private final Executor defaultExecutor;
     private final Map<UUID, CompletableFuture<?>> queue = new ConcurrentHashMap<>();
     private final CookieManager cookieManager;
+    private final ClientConfigProvider clientConfigProvider;
 
     public HttpClientEngine(final ResteasyClientBuilder resteasyClientBuilder,
-                            final Executor defaultExecutor) {
+                            final Executor defaultExecutor, final ClientConfigProvider clientConfigProvider) {
         this.resteasyClientBuilder = resteasyClientBuilder;
         this.defaultExecutor = defaultExecutor;
         this.cookieManager = new CookieManager();
+        this.clientConfigProvider = clientConfigProvider;
     }
 
     @Override
@@ -188,7 +202,7 @@ public class HttpClientEngine implements AsyncClientHttpEngine {
             } else {
                 handler = HttpResponse.BodyHandlers.ofInputStream();
             }
-            return queue(createClient(executor).sendAsync(httpRequest, handler)
+            return queue(createClient(executor, request.getUri()).sendAsync(httpRequest, handler)
                     .handle((response, error) -> {
                         if (error != null) {
                             Throwable cause = error;
@@ -205,10 +219,70 @@ public class HttpClientEngine implements AsyncClientHttpEngine {
         }
     }
 
-    private HttpClient createClient(final Executor executor) {
+    private HttpClient createClient(final Executor executor, final URI uri) throws Exception {
         final HttpClient.Builder builder = HttpClient.newBuilder()
                 .followRedirects(resteasyClientBuilder.isFollowRedirects() ? HttpClient.Redirect.ALWAYS : HttpClient.Redirect.NEVER);
-        final SSLContext sslContext = resteasyClientBuilder.getSSLContext();
+        // TODO (jrp) what do we do here?
+        HostnameVerifier verifier = null;
+        if (resteasyClientBuilder.getHostnameVerifier() != null) {
+            verifier = resteasyClientBuilder.getHostnameVerifier();
+        } else {
+            switch (resteasyClientBuilder.getHostnameVerification()) {
+                case ANY:
+                    verifier = new NoopHostnameVerifier();
+                    break;
+                case WILDCARD:
+                    verifier = new DefaultHostnameVerifier();
+                    break;
+                case STRICT:
+                    //this will load default file from httplcient.jar!/mozilla/public-suffix-list.txt
+                    //if this default file isn't what you want, set a customized HostNameVerifier
+                    //to ResteasyClientBuilder instead
+                    // TODO (jrp) no, this is apache releated
+                    verifier = new DefaultHostnameVerifier(PublicSuffixMatcherLoader.getDefault());
+                    break;
+            }
+        }
+        SSLContext sslContext = null;
+        if (resteasyClientBuilder.isTrustManagerDisabled()) {
+            sslContext = new SSLContextBuilder()
+                    .setTrustManager(new PassthroughTrustManager())
+                    .setClientMode(true)
+                    .build()
+                    .create();
+        } else if (resteasyClientBuilder.getSSLContext() != null) {
+            sslContext = resteasyClientBuilder.getSSLContext();
+            if (!resteasyClientBuilder.getSniHostNames().isEmpty()) {
+                final SSLParameters sslParameters = new SSLParameters();
+                sslParameters.setServerNames(resteasyClientBuilder.getSniHostNames()
+                        .stream()
+                        .map(SNIHostName::new)
+                        .collect(Collectors.toList())
+                );
+                builder.sslParameters(sslParameters);
+            }
+        } else if (resteasyClientBuilder.getKeyStore() != null || resteasyClientBuilder.getTrustStore() != null) {
+            final KeyStore keyStore = resteasyClientBuilder.getKeyStore();
+            final KeyStore trustStore = resteasyClientBuilder.getTrustStore();
+            final SSLContextBuilder sslContextBuilder = new SSLContextBuilder()
+                    .setClientMode(true);
+            if (keyStore != null) {
+                sslContextBuilder.setKeyManager(HttpSslUtils.getKeyManager(keyStore, resteasyClientBuilder.getKeyStorePassword()));
+            }
+            if (trustStore != null) {
+                final X509TrustManager trustManager;
+                if (resteasyClientBuilder.isTrustSelfSignedCertificates()) {
+                    trustManager = new HostVerificationTrustManager(new TrustSelfSignedTrustManager(HttpSslUtils.getTrustManager(trustStore)), verifier);
+                } else {
+                    trustManager = new HostVerificationTrustManager(HttpSslUtils.getTrustManager(trustStore), verifier);
+                }
+                sslContextBuilder.setTrustManager(trustManager);
+            }
+            sslContext = sslContextBuilder.build()
+                    .create();
+        } else if (clientConfigProvider != null) {
+            sslContext = clientConfigProvider.getSSLContext(uri);
+        }
         if (sslContext != null) {
             builder.sslContext(sslContext);
         }
@@ -255,21 +329,21 @@ public class HttpClientEngine implements AsyncClientHttpEngine {
         }
         final String method = clientInvocation.getMethod();
         if ("GET".equalsIgnoreCase(method)) {
-            requestBuilder.GET();
+            // TODO (jrp) need to figure out why -1 is expected for a GET method
+            requestBuilder.method("GET", DelegatingBodyPublisher.of(HttpRequest.BodyPublishers.noBody()));
         } else {
             if (clientInvocation.getEntity() != null) {
                 // TODO (jrp) the threshold should be configurable
-                try (EntityOutputStream out = new EntityOutputStream(1024, () -> "resteasy-" + clientInvocation + "-" + method)) {
-                    requestBuilder.method(method, HttpRequest.BodyPublishers.ofInputStream(() -> {
-                        try {
-                            return out.toInputStream();
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    }));
+                final EntityOutputStream out = new EntityOutputStream(1024, () -> "resteasy-" + clientInvocation + "-" + method);
+                // TODO (jrp) checkstyle chokes on this and throws an NPE, there might be a better way to handle it
+                //try (out) {
+                try {
                     clientInvocation.getDelegatingOutputStream().setDelegate(out);
                     clientInvocation.writeRequestBody(clientInvocation.getEntityStream());
+                } finally {
+                    out.close();
                 }
+                requestBuilder.method(method, out.toPublisher());
             } else {
                 requestBuilder.method(method, HttpRequest.BodyPublishers.noBody());
             }
@@ -318,6 +392,9 @@ public class HttpClientEngine implements AsyncClientHttpEngine {
                 // TODO (jrp) invoked. We need to way to say there is no body vs an empty body which may not be possible.
                 // TODO (jrp) If it's not possible, we may need to handle special cases where no body is allowed.
                 // TODO (jrp) we need to determine if there is an entity, however the response.body() should never be null
+                if (HttpMethod.HEAD.equals(response.request().method())) {
+                    return null;
+                }
                 final InputStream body = response.body();
                 super.setInputStream(body);
                 return body;
@@ -340,7 +417,7 @@ public class HttpClientEngine implements AsyncClientHttpEngine {
         final CaseInsensitiveMap<String> headers = new CaseInsensitiveMap<>();
         response.headers().map().forEach((name, values) -> {
             for (String value : values) {
-                headers.add(name, value);
+                headers.add(ResponseHeaders.lowerToDefault(name), value);
             }
         });
         return headers;

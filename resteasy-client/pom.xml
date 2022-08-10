@@ -74,6 +74,11 @@
             <groupId>org.reactivestreams</groupId>
             <artifactId>reactive-streams</artifactId>
         </dependency>
+        <!-- TODO (jrp) upgrade and exclude what we don't need -->
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-ssl</artifactId>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>

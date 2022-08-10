@@ -41,6 +41,7 @@
         <module name="org.jboss.resteasy.resteasy-core" services="import"/>
         <module name="org.jboss.resteasy.resteasy-core-spi"/>
         <module name="org.reactivestreams"/>
+        <module name="org.wildfly.security.elytron-base" services="import"/>
         <!-- Optional dependencies if we have the MicroProfile REST Client available. Note we need to export the
              org.jboss.resteasy.resteasy-client-microprofile as it will be loaded from another module loader.
          -->

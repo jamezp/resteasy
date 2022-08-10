@@ -25,6 +25,7 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.jboss.resteasy.test.ContainerConstants.TRACING_CONTAINER_PORT_OFFSET;
@@ -137,5 +138,9 @@ public abstract class TracingTestBase {
             // irrelevant response headers
          }
       }
+   }
+
+   protected static boolean caseInsensitiveStartsWith(final String value, final String prefix) {
+      return value != null && prefix != null && value.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT));
    }
 }

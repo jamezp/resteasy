@@ -27,6 +27,7 @@ import org.jboss.resteasy.client.jaxrs.ClientHttpEngineBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpAsyncClient4Engine;
+import org.jboss.resteasy.client.jaxrs.engines.ClientHttpEngineBuilder43;
 import org.jboss.resteasy.client.jaxrs.engines.HttpClientEngine;
 import org.jboss.resteasy.client.jaxrs.engines.HttpClientEngineBuilder;
 import org.jboss.resteasy.client.jaxrs.i18n.LogMessages;
@@ -447,18 +448,21 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
             httpEngine(((ClientHttpEngineBuilder) p).resteasyClientBuilder(this).executor(executor).build());
          }
       }
+      ClientConfigProvider clientConfigProvider = null;
+      Iterator<ClientConfigProvider> serviceLoaderIterator = ServiceLoader.load(ClientConfigProvider.class).iterator();
+      if (serviceLoaderIterator.hasNext()) {
+         clientConfigProvider = serviceLoaderIterator.next();
+         config.register(new ClientConfigProviderFilter(clientConfigProvider), Priorities.AUTHENTICATION);
+      }
 
-      //ClientHttpEngine engine = httpEngine != null ? httpEngine : new ClientHttpEngineBuilder43().resteasyClientBuilder(this).build();
-      ClientHttpEngine engine = httpEngine != null ? httpEngine : new HttpClientEngineBuilder()
+      ClientHttpEngine engine = httpEngine != null ? httpEngine : new ClientHttpEngineBuilder43().resteasyClientBuilder(this).build();
+      ClientHttpEngine jdkEngine = httpEngine != null ? httpEngine : new HttpClientEngineBuilder(clientConfigProvider)
               .resteasyClientBuilder(this)
               .executor(executor)
               .build();
+      engine = jdkEngine;
       if (resetProxy) {
          this.defaultProxy = null;
-      }
-      Iterator<ClientConfigProvider> serviceLoaderIterator = ServiceLoader.load(ClientConfigProvider.class).iterator();
-      if (serviceLoaderIterator.hasNext()) {
-         config.register(new ClientConfigProviderFilter(serviceLoaderIterator.next()), Priorities.AUTHENTICATION);
       }
       return createResteasyClient(engine, executor, !executor.isManaged(), ContextualExecutors.wrapOrLookup(scheduledExecutorService), config);
 

@@ -4,7 +4,12 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import jakarta.ws.rs.client.ClientBuilder;
+
+import org.jboss.as.arquillian.api.ServerSetup;
+import org.jboss.resteasy.setup.LoggingSetupTask;
 import org.jboss.resteasy.test.resource.basic.resource.ApplicationScopeObject;
+import org.jboss.resteasy.test.resource.basic.resource.MultiInterfaceResLocatorIntf1;
+import org.jboss.resteasy.test.resource.basic.resource.MultiInterfaceResLocatorIntf2;
 import org.jboss.resteasy.test.resource.basic.resource.MultiInterfaceResLocatorResource;
 import org.jboss.resteasy.test.resource.basic.resource.MultiInterfaceResLocatorSubresource;
 import org.jboss.resteasy.test.resource.basic.resource.ParameterSubResClassSub;
@@ -44,6 +49,7 @@ import java.util.logging.LoggingPermission;
  */
 @RunWith(Arquillian.class)
 @RunAsClient
+@ServerSetup(LoggingSetupTask.class)
 public class ParameterSubResTest {
 
    static Client client;
@@ -63,6 +69,8 @@ public class ParameterSubResTest {
       war.addClass(RequestScopedObject.class);
       war.addClass(ParameterSubResSub.class);
       war.addClass(ParameterSubResSubImpl.class);
+      war.addClass(MultiInterfaceResLocatorIntf1.class);
+      war.addClass(MultiInterfaceResLocatorIntf2.class);
       war.addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
       war.addAsManifestResource(PermissionUtil.createPermissionsXmlAsset(
             new LoggingPermission("control", "")

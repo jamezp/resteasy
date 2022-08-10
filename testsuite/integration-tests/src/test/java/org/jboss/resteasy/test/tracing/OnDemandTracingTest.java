@@ -11,6 +11,7 @@ import org.junit.Test;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -79,8 +80,8 @@ public class OnDemandTracingTest extends TracingTestBase {
 
    private void testTracingEnabled(Response response, boolean flag) {
       boolean hasTracing = false;
-      for (Map.Entry entry : response.getStringHeaders().entrySet()) {
-         if (entry.getKey().toString().startsWith(RESTEasyTracing.HEADER_TRACING_PREFIX)) {
+      for (Map.Entry<String, List<String>> entry : response.getStringHeaders().entrySet()) {
+         if (caseInsensitiveStartsWith(entry.getKey(), RESTEasyTracing.HEADER_TRACING_PREFIX)) {
             LOG.info("<K, V> ->" + entry);
             hasTracing = true;
             break;

@@ -24,7 +24,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.ref.Cleaner;
+import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -36,6 +38,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.FileEntity;
 import org.jboss.resteasy.client.jaxrs.i18n.LogMessages;
 import org.jboss.resteasy.client.jaxrs.i18n.Messages;
+import org.jboss.resteasy.core.ResourceCleaner;
 
 /**
  * A stream used for entities in a client. This may buffer, given the threshold value, in memory or be written to a file.
@@ -44,7 +47,6 @@ import org.jboss.resteasy.client.jaxrs.i18n.Messages;
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
 class EntityOutputStream extends OutputStream {
-    private static final Cleaner CLEANER = Cleaner.create();
 
     private static class FileCleaner implements Runnable {
         private final Path path;
@@ -151,7 +153,7 @@ class EntityOutputStream extends OutputStream {
         synchronized (lock) {
             if (file != null) {
                 final InputStream in = Files.newInputStream(file);
-                return new EntityInputStream(in, CLEANER.register(in, new FileCleaner(file)));
+                return new EntityInputStream(in, ResourceCleaner.register(in, new FileCleaner(file)));
             }
             try {
                 return new ByteArrayInputStream(inMemory.toByteArray());
@@ -159,6 +161,47 @@ class EntityOutputStream extends OutputStream {
                 inMemory.reset();
             }
         }
+    }
+
+    /**
+     *
+     * @return
+     * @throws IOException
+     */
+    HttpRequest.BodyPublisher toPublisher() throws IOException {
+        if (!closed.get()) {
+            throw Messages.MESSAGES.streamNotClosed(this);
+        }
+        if (!exported.compareAndSet(false, true)) {
+            throw Messages.MESSAGES.alreadyExported();
+        }
+        final HttpRequest.BodyPublisher delegate;
+        final long len;
+        synchronized (lock) {
+            final Supplier<InputStream> stream;
+            if (file != null) {
+                stream = () -> {
+                    try {
+                        // TODO (jrp) not quite right, we need to ensure the file gets deleted if the stream is never consumed
+                        final InputStream in = Files.newInputStream(file);
+                        return new EntityInputStream(in, ResourceCleaner.register(in, new FileCleaner(file)));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                };
+                len = Files.size(file);
+            } else {
+                try {
+                    final InputStream in = new ByteArrayInputStream(inMemory.toByteArray());
+                    stream = () -> in;
+                    len = inMemory.size();
+                } finally {
+                    inMemory.reset();
+                }
+            }
+            delegate = HttpRequest.BodyPublishers.ofInputStream(stream);
+        }
+        return DelegatingBodyPublisher.of(delegate, len);
     }
 
     /**
@@ -176,7 +219,7 @@ class EntityOutputStream extends OutputStream {
         synchronized (lock) {
             if (file != null) {
                 final AbstractHttpEntity result = new FileEntity(file.toFile());
-                CLEANER.register(result, new FileCleaner(file));
+                ResourceCleaner.register(result, new FileCleaner(file));
                 return result;
             }
             try {

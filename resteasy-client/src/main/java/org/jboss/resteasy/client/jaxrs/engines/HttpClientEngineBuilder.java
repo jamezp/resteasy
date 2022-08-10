@@ -24,6 +24,7 @@ import java.util.concurrent.Executor;
 import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
 import org.jboss.resteasy.client.jaxrs.ClientHttpEngineBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.spi.ClientConfigProvider;
 
 /**
  * A {@link ClientHttpEngineBuilder} for the {@link java.net.http.HttpClient}.
@@ -31,8 +32,13 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
 public class HttpClientEngineBuilder implements ClientHttpEngineBuilder {
+    private final ClientConfigProvider clientConfigProvider;
     private Executor executor;
     private ResteasyClientBuilder resteasyClientBuilder;
+
+    public HttpClientEngineBuilder(final ClientConfigProvider clientConfigProvider) {
+        this.clientConfigProvider = clientConfigProvider;
+    }
 
     @Override
     public ClientHttpEngineBuilder resteasyClientBuilder(final ResteasyClientBuilder resteasyClientBuilder) {
@@ -48,6 +54,6 @@ public class HttpClientEngineBuilder implements ClientHttpEngineBuilder {
 
     @Override
     public ClientHttpEngine build() {
-        return new HttpClientEngine(resteasyClientBuilder.toImmutable(), executor);
+        return new HttpClientEngine(resteasyClientBuilder.toImmutable(), executor, clientConfigProvider);
     }
 }

@@ -4,8 +4,10 @@ import io.reactivex.Flowable;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.as.arquillian.api.ServerSetup;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.rxjava2.FlowableRxInvoker;
+import org.jboss.resteasy.setup.LoggingSetupTask;
 import org.jboss.resteasy.test.response.resource.AsyncResponseCallback;
 import org.jboss.resteasy.test.response.resource.AsyncResponseException;
 import org.jboss.resteasy.test.response.resource.AsyncResponseExceptionMapper;
@@ -46,6 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @RunWith(Arquillian.class)
 @RunAsClient
+@ServerSetup(LoggingSetupTask.class)
 public class PublisherResponseTest {
 
    Client client;
@@ -262,6 +265,7 @@ public class PublisherResponseTest {
    @Test
    public void testInfiniteStreamsChunked() throws Exception
    {
+      // TODO (jrp) why is this failing?
       Client client = ClientBuilder.newClient();
       FlowableRxInvoker invoker = client.target(generateURL("/chunked-infinite")).request().rx(FlowableRxInvoker.class);
       Flowable<String> flowable = (Flowable<String>) invoker.get();
@@ -274,6 +278,7 @@ public class PublisherResponseTest {
          (Throwable t) -> logger.error("Error:", t),
          () -> latch.countDown());
       latch.await();
+      // TODO (jrp) maybe this is the issue, when the client exits it doesn't actually close/create the response
       client.close();
 
       Thread.sleep(5000);
