@@ -33,6 +33,7 @@ import java.util.WeakHashMap;
 public class RegisterBuiltin
 {
    private static final Map<ClassLoader, ResteasyProviderFactory> configuredClientFactories = new WeakHashMap<>();
+   // TODO (jrp) this is accessed before. I don't quite understand why we compare it with the static output vs this output
    private static final boolean gzipForCachedFactories = isGZipEnabled();
 
    public static synchronized ResteasyProviderFactory getClientInitializedResteasyProviderFactory(ClassLoader cl)

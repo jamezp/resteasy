@@ -146,8 +146,6 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory impleme
    protected boolean lockSnapshots;
    protected StatisticsControllerImpl statisticsController = new StatisticsControllerImpl();
 
-   private final boolean defaultExceptionManagerEnabled = getOptionValue(Options.ENABLE_DEFAULT_EXCEPTION_MAPPER);
-
    public ResteasyProviderFactoryImpl()
    {
       // NOTE!!! It is important to put all initialization into initialize() as ThreadLocalResteasyProviderFactory
@@ -258,6 +256,7 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory impleme
 
 
       injectorFactory = parent == null ? InjectorFactoryImpl.INSTANCE : parent.getInjectorFactory();
+      // TODO (jrp) here is where we should initialize our "context", whether that is DeploymentContext or just the plain Configuration which delegates
       initialized = true;
    }
 
@@ -1109,6 +1108,7 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory impleme
    @Override
    public <T extends Throwable> ExceptionMapper<T> getExceptionMapper(Class<T> type)
    {
+      final boolean defaultExceptionManagerEnabled = isDefaultExceptionManagerEnabled();
       Class exceptionType = type;
       SortedKey<ExceptionMapper> mapper = null;
       Map<Class<?>, SortedKey<ExceptionMapper>> mappers = getSortedExceptionMappers();
@@ -1831,7 +1831,7 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory impleme
     * @return {@code true} if the default exception is enabled, otherwise {@code false}
     */
    public boolean isDefaultExceptionManagerEnabled() {
-      return defaultExceptionManagerEnabled;
+      return getOptionValue(Options.ENABLE_DEFAULT_EXCEPTION_MAPPER);
    }
 
    @SuppressWarnings("SameParameterValue")

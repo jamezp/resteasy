@@ -1,5 +1,6 @@
 package org.jboss.resteasy.core;
 
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl;
 import org.jboss.resteasy.plugins.interceptors.RoleBasedSecurityFeature;
 import org.jboss.resteasy.plugins.providers.JaxrsServerFormUrlEncodedProvider;
@@ -19,6 +20,9 @@ import org.jboss.resteasy.spi.ResourceFactory;
 import org.jboss.resteasy.spi.ResteasyConfiguration;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
+import org.jboss.resteasy.spi.deployment.ContextClassLoaderDeploymentContextSelector;
+import org.jboss.resteasy.spi.deployment.DeploymentContext;
+import org.jboss.resteasy.spi.deployment.DeploymentContextSelector;
 import org.jboss.resteasy.spi.metadata.ResourceBuilder;
 import org.jboss.resteasy.util.GetRestful;
 
@@ -49,6 +53,7 @@ import java.util.TreeMap;
  */
 public class ResteasyDeploymentImpl implements ResteasyDeployment
 {
+   private static final Logger LOGGER = Logger.getLogger(ResteasyDeploymentImpl.class);
    protected boolean widerRequestMatching;
    protected boolean useContainerFormParams = false;
    protected boolean deploymentSensitiveFactoryEnabled = false;
@@ -117,7 +122,6 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
    }
 
    public ResteasyDeploymentImpl(final boolean quarkus) {
-
    }
 
    public void start()
@@ -134,6 +138,19 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
 
    private void startInternal()
    {
+      // TODO (jrp) we may end up with multiple deployments on the same context
+      final DeploymentContext deploymentContext;
+      final DeploymentContextSelector selector = DeploymentContext.getDeploymentContextSelector();
+      if (selector instanceof ContextClassLoaderDeploymentContextSelector) {
+         final ClassLoader classLoader = getContextClassLoader();
+         deploymentContext = new DeploymentContext(classLoader.getName());
+         ((ContextClassLoaderDeploymentContextSelector) selector).registerDeploymentContext(getContextClassLoader(), deploymentContext);
+         // TODO (jrp) change this to debug
+         LOGGER.warnf("rdi-added: Added deployment %s with class loader %s", deploymentContext, classLoader);
+      } else {
+         deploymentContext = DeploymentContext.getDeploymentContext();
+      }
+      // TODO (jrp) we'll want to pass the context here. Possibly even the configuration
       initializeFactory();
       initializeDispatcher();
       pushContext();
@@ -174,6 +191,8 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
       }
       finally
       {
+         deploymentContext.put(ResteasyProviderFactory.class, providerFactory);
+         deploymentContext.put(ResteasyDeployment.class, this);
          ResteasyContext.removeContextDataLevel();
       }
    }
@@ -327,33 +346,6 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
       Object thresholdText;
       Object context = getDefaultContextObjects() == null ? null : getDefaultContextObjects().get(ResteasyConfiguration.class);
 
-      org.jboss.resteasy.spi.config.Configuration config = ConfigurationFactory.getInstance().getConfiguration((ResteasyConfiguration) context);
-      tracingText = config.getOptionalValue(ResteasyContextParameters.RESTEASY_TRACING_TYPE, String.class).orElse(null);
-      thresholdText = config.getOptionalValue(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD, String.class).orElse(null);
-
-      if (tracingText != null) {
-         providerFactory.property(ResteasyContextParameters.RESTEASY_TRACING_TYPE, tracingText);
-      } else {
-         if (context != null) {
-            tracingText = ((ResteasyConfiguration) context).getParameter(ResteasyContextParameters.RESTEASY_TRACING_TYPE);
-            if (tracingText != null) {
-               providerFactory.property(ResteasyContextParameters.RESTEASY_TRACING_TYPE, tracingText);
-            }
-         }
-      }
-
-      if (thresholdText != null) {
-         providerFactory.getMutableProperties().put(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD, thresholdText);
-      } else {
-
-         if (context != null) {
-            thresholdText = ((ResteasyConfiguration) context).getInitParameter(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD);
-            if (thresholdText != null) {
-               providerFactory.getMutableProperties().put(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD, thresholdText);
-            }
-         }
-      }
-
       if (deploymentSensitiveFactoryEnabled)
       {
          // the ThreadLocalResteasyProviderFactory pushes and pops this deployments parentProviderFactory
@@ -380,6 +372,34 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
       else
       {
          ResteasyProviderFactory.setInstance(providerFactory);
+      }
+
+      // TODO (jrp) here is where we would need to know the context.
+      org.jboss.resteasy.spi.config.Configuration config = ConfigurationFactory.getInstance().getConfiguration((ResteasyConfiguration) context);
+      tracingText = config.getOptionalValue(ResteasyContextParameters.RESTEASY_TRACING_TYPE, String.class).orElse(null);
+      thresholdText = config.getOptionalValue(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD, String.class).orElse(null);
+
+      if (tracingText != null) {
+         providerFactory.property(ResteasyContextParameters.RESTEASY_TRACING_TYPE, tracingText);
+      } else {
+         if (context != null) {
+            tracingText = ((ResteasyConfiguration) context).getParameter(ResteasyContextParameters.RESTEASY_TRACING_TYPE);
+            if (tracingText != null) {
+               providerFactory.property(ResteasyContextParameters.RESTEASY_TRACING_TYPE, tracingText);
+            }
+         }
+      }
+
+      if (thresholdText != null) {
+         providerFactory.getMutableProperties().put(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD, thresholdText);
+      } else {
+
+         if (context != null) {
+            thresholdText = ((ResteasyConfiguration) context).getInitParameter(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD);
+            if (thresholdText != null) {
+               providerFactory.getMutableProperties().put(ResteasyContextParameters.RESTEASY_TRACING_THRESHOLD, thresholdText);
+            }
+         }
       }
    }
 
@@ -657,6 +677,19 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
 
       ResteasyProviderFactory.clearInstanceIfEqual(threadLocalProviderFactory);
       ResteasyProviderFactory.clearInstanceIfEqual(providerFactory);
+
+      // TODO (jrp) this is hacking here and in the start. However, we might need to keep it for now until we can
+      // TODO (jrp) implement something in WildFly. Could/should we have a ResteasyDeploymentImpl and a ContainerDeploymentImpl?
+      // TODO (jrp) the latter of which uses a ContextClassLoaderDeploymentContextSelector and handles this?
+      final DeploymentContext deploymentContext = DeploymentContext.getDeploymentContext();
+      // TODO (jrp) we should probably also clear the context like above
+      final DeploymentContextSelector selector = DeploymentContext.getDeploymentContextSelector();
+      if (selector instanceof ContextClassLoaderDeploymentContextSelector) {
+         if (((ContextClassLoaderDeploymentContextSelector) selector).unregisterDeploymentContext(getContextClassLoader(), deploymentContext)) {
+            // TODO (jrp) change this to debug
+            LOGGER.warnf("rdi-remove: Removed deployment context %s from selector", deploymentContext);
+         }
+      }
    }
 
    /**
@@ -1163,5 +1196,22 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
          return (Boolean) value;
       }
       return !String.valueOf(value).equalsIgnoreCase("false");
+   }
+
+   private static ClassLoader getContextClassLoader() {
+      if (System.getSecurityManager() == null) {
+         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+         if (classLoader == null) {
+            classLoader = ResteasyDeploymentImpl.class.getClassLoader();
+         }
+         return classLoader;
+      }
+      return AccessController.doPrivileged((PrivilegedAction<ClassLoader>) () -> {
+         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+         if (classLoader == null) {
+            classLoader = ResteasyDeploymentImpl.class.getClassLoader();
+         }
+         return classLoader;
+      });
    }
 }

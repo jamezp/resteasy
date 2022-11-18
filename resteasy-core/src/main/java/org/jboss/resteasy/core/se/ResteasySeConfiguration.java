@@ -94,6 +94,7 @@ public class ResteasySeConfiguration implements Configuration {
         @Override
         public Configuration build() {
             final Map<String, Object> properties = new HashMap<>(this.properties);
+            // TODO (jrp) this seems to be hit twice, it should also be converted to a supplier
             properties.putIfAbsent(PROTOCOL, ConfigurationOption.PROTOCOL.defaultValue());
             properties.computeIfAbsent(HOST, (host) -> ConfigurationOption.HOST.defaultValue());
             if (properties.containsKey(PORT)) {

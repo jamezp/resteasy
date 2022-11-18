@@ -159,7 +159,7 @@ public class ManualClosingApacheHttpClient43Engine implements ApacheHttpClientEn
     * <br>
     * Defaults to JVM temp directory.
     */
-   protected Path fileUploadTempFileDir = getTempDir();
+   protected Path fileUploadTempFileDir;
 
    public ManualClosingApacheHttpClient43Engine()
    {
@@ -202,6 +202,7 @@ public class ManualClosingApacheHttpClient43Engine implements ApacheHttpClientEn
       autoClosed = new AtomicBoolean(true);
       this.cleanable = createCleanable(this, closeHttpClient, closed, autoClosed, this.httpClient);
       this.defaultProxy = defaultProxy;
+      this.fileUploadTempFileDir = getTempDir();
 
       try
       {

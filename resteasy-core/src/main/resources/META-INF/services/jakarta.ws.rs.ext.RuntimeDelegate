@@ -1,1 +1,2 @@
-org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl
+#org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl
+org.jboss.resteasy.spi.deployment.DeploymentRuntimeDelegate

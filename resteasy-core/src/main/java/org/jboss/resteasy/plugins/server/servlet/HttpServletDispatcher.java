@@ -52,6 +52,8 @@ public class HttpServletDispatcher extends HttpServlet implements HttpRequestFac
    @Override
    protected void service(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException
    {
+      // TODO (jrp) can we use the request.getHttpServletMapping().getServletName() to look up the DeploymentContext/ResteasyProviderFactory?
+      // TODO (jrp) we actually need a key like ClassLoader, request.getHttpServletMapping().getServletName().
       service(httpServletRequest.getMethod(), httpServletRequest, httpServletResponse);
    }
 

@@ -19,17 +19,15 @@
 
 package org.jboss.resteasy.spi.config;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.ServiceLoader;
-
 import org.jboss.resteasy.spi.ResteasyConfiguration;
+import org.jboss.resteasy.spi.deployment.DeploymentContext;
 
 /**
  * A factory which returns the {@link Configuration}.
  *
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
+// TODO (jrp) can this be deprecated?
 public interface ConfigurationFactory {
 
     /**
@@ -40,30 +38,8 @@ public interface ConfigurationFactory {
      * @throws RuntimeException if the service loader could not find a factory
      */
     static ConfigurationFactory getInstance() {
-        if (System.getSecurityManager() == null) {
-            final ServiceLoader<ConfigurationFactory> loader = ServiceLoader.load(ConfigurationFactory.class);
-            ConfigurationFactory current = null;
-            for (ConfigurationFactory factory : loader) {
-                if (current == null) {
-                    current = factory;
-                } else if (factory.priority() < current.priority()) {
-                    current = factory;
-                }
-            }
-            return current == null ? () -> Integer.MAX_VALUE : current;
-        }
-        return AccessController.doPrivileged((PrivilegedAction<ConfigurationFactory>) () -> {
-            final ServiceLoader<ConfigurationFactory> loader = ServiceLoader.load(ConfigurationFactory.class);
-            ConfigurationFactory current = null;
-            for (ConfigurationFactory factory : loader) {
-                if (current == null) {
-                    current = factory;
-                } else if (factory.priority() < current.priority()) {
-                    current = factory;
-                }
-            }
-            return current == null ? () -> Integer.MAX_VALUE : current;
-        });
+        final DeploymentContext context = DeploymentContext.getDeploymentContext();
+        return context.computeIfAbsent(ConfigurationFactory.class, ConfigurationFactorySupplier.INSTANCE);
     }
 
     /**
