@@ -12,6 +12,7 @@ import org.jboss.resteasy.client.jaxrs.i18n.Messages;
 import org.jboss.resteasy.client.jaxrs.spi.ClientConfigProvider;
 import org.jboss.resteasy.concurrent.ContextualExecutorService;
 import org.jboss.resteasy.concurrent.ContextualExecutors;
+import org.jboss.resteasy.context.Context;
 import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryDelegate;
 import org.jboss.resteasy.plugins.interceptors.AcceptEncodingGZIPFilter;
 import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
@@ -91,6 +92,9 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder
          }
          providerFactory = localProviderFactory;
       }
+
+      // TODO (jrp) what should we really do here
+      Context.createAndRegister();
    }
 
    /**

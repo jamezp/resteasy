@@ -1,5 +1,6 @@
 package org.jboss.resteasy.core;
 
+import org.jboss.resteasy.context.Context;
 import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl;
 import org.jboss.resteasy.plugins.interceptors.RoleBasedSecurityFeature;
 import org.jboss.resteasy.plugins.providers.JaxrsServerFormUrlEncodedProvider;
@@ -92,6 +93,7 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
    protected String paramMapping;
    protected Map<String, Object> properties;
    protected boolean statisticsEnabled;
+   private final Context context;
 
    @SuppressWarnings("rawtypes")
    public ResteasyDeploymentImpl() {
@@ -114,10 +116,11 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
       defaultContextObjects = new HashMap<Class, Object>();
       constructedDefaultContextObjects = new HashMap<String, String>();
       properties = new TreeMap<String, Object>();
+      context = Context.createAndRegister();
    }
 
    public ResteasyDeploymentImpl(final boolean quarkus) {
-
+      context = Context.createAndRegister();
    }
 
    public void start()
@@ -134,47 +137,47 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
 
    private void startInternal()
    {
-      initializeFactory();
-      initializeDispatcher();
-      pushContext();
+      try {
+         // Push the context locally
+         Context.push(context);
+         initializeFactory();
+         initializeDispatcher();
+         pushContext();
 
-      try
-      {
-         initializeObjects();
+         try {
+            initializeObjects();
 
-         if (securityEnabled)
-         {
-            providerFactory.register(RoleBasedSecurityFeature.class);
+            if (securityEnabled) {
+               providerFactory.register(RoleBasedSecurityFeature.class);
+            }
+
+
+            if (registerBuiltin) {
+               providerFactory.setRegisterBuiltins(true);
+               RegisterBuiltin.register(providerFactory);
+
+               // having problems using form parameters from container for a couple of TCK tests.  I couldn't figure out
+               // why, specifically:
+               // com/sun/ts/tests/jaxrs/spec/provider/standardhaspriority/JAXRSClient.java#readWriteMapProviderTest_from_standalone                                               Failed. Test case throws exception: [JAXRSCommonClient] null failed!  Check output for cause of failure.
+               // com/sun/ts/tests/jaxrs/spec/provider/standardwithjaxrsclient/JAXRSClient.java#mapElementProviderTest_from_standalone                                             Failed. Test case throws exception: returned MultivaluedMap is null
+               providerFactory.registerProviderInstance(new ServerFormUrlEncodedProvider(useContainerFormParams), null, null, true);
+               providerFactory.registerProviderInstance(new JaxrsServerFormUrlEncodedProvider(useContainerFormParams), null, null, true);
+            } else {
+               providerFactory.setRegisterBuiltins(false);
+            }
+
+
+            // register all providers
+            registration();
+
+            registerMappers();
+            ((ResteasyProviderFactoryImpl) providerFactory).lockSnapshots();
+         } finally {
+            ResteasyContext.removeContextDataLevel();
          }
-
-
-         if (registerBuiltin)
-         {
-            providerFactory.setRegisterBuiltins(true);
-            RegisterBuiltin.register(providerFactory);
-
-            // having problems using form parameters from container for a couple of TCK tests.  I couldn't figure out
-            // why, specifically:
-            // com/sun/ts/tests/jaxrs/spec/provider/standardhaspriority/JAXRSClient.java#readWriteMapProviderTest_from_standalone                                               Failed. Test case throws exception: [JAXRSCommonClient] null failed!  Check output for cause of failure.
-            // com/sun/ts/tests/jaxrs/spec/provider/standardwithjaxrsclient/JAXRSClient.java#mapElementProviderTest_from_standalone                                             Failed. Test case throws exception: returned MultivaluedMap is null
-            providerFactory.registerProviderInstance(new ServerFormUrlEncodedProvider(useContainerFormParams), null, null, true);
-            providerFactory.registerProviderInstance(new JaxrsServerFormUrlEncodedProvider(useContainerFormParams), null, null, true);
-         }
-         else
-         {
-            providerFactory.setRegisterBuiltins(false);
-         }
-
-
-         // register all providers
-         registration();
-
-         registerMappers();
-         ((ResteasyProviderFactoryImpl)providerFactory).lockSnapshots();
-      }
-      finally
-      {
-         ResteasyContext.removeContextDataLevel();
+      } finally {
+         // Pop the current context
+         Context.pop();
       }
    }
 
@@ -657,6 +660,8 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment
 
       ResteasyProviderFactory.clearInstanceIfEqual(threadLocalProviderFactory);
       ResteasyProviderFactory.clearInstanceIfEqual(providerFactory);
+      Context.unregister(context);
+      context.close();
    }
 
    /**

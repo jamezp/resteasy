@@ -320,6 +320,7 @@ public class ContextualExecutors {
 
     @SuppressWarnings("unchecked")
     private static Map<ThreadContext<Object>, Object> getContexts() {
+        // TODO (jrp) don't do this lookup everytime as it's expensive and we should know this per-deployment what we have
         final Map<ThreadContext<Object>, Object> contexts = new LinkedHashMap<>();
         if (System.getSecurityManager() == null) {
             ServiceLoader.load(ThreadContext.class).forEach(context -> contexts.put(context, context.capture()));
