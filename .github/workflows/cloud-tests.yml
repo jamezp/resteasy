@@ -58,9 +58,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest ]
         java: ['17']
-        wildfly-version: [ ${{ env.WILDFLY_VERSIONS }} ]
+        wildfly-version: ${{ env.WILDFLY_VERSIONS }}
 
     steps:
       - name: Testing
         run:  |
-          echo ${{ matrix.wildfly-version }}
+          env
