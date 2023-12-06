@@ -32,6 +32,7 @@
         <server.version>31.0.1.Final</server.version>
         <version.org.wildfly>${server.version}</version.org.wildfly>
         <version.org.wildfly.arquillian.wildfly-arquillian>5.1.0.Beta2</version.org.wildfly.arquillian.wildfly-arquillian>
+        <version.org.wildfly.wildfly-channel-maven-plugin>1.0.12</version.org.wildfly.wildfly-channel-maven-plugin>
 
         <jboss.home/>
         <!-- print logs to file by default -->
@@ -155,7 +156,8 @@
                 <module>server-adapters</module>
                 <module>resteasy-wadl</module>
                 <module>resteasy-wadl-undertow-connector</module>
-                <module>resteasy-feature-pack</module>
+                <module>wildfly/resteasy-feature-pack</module>
+                <module>wildfly/resteasy-manifest</module>
                 <module>profiling-tests</module>
                 <module>testsuite</module>
                 <!-- Build this last -->

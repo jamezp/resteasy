@@ -55,10 +55,16 @@
                         <feature-pack>
                             <location>org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}</location>
                         </feature-pack>
-                        <feature-pack>
-                            <location>org.jboss.resteasy:galleon-feature-pack:${version.resteasy.testsuite}</location>
-                        </feature-pack>
                     </feature-packs>
+                    <channels>
+                        <channel>
+                            <manifest>
+                                <groupId>org.jboss.resteasy</groupId>
+                                <artifactId>resteasy-manifest-7.0</artifactId>
+                                <version>${project.version}</version>
+                            </manifest>
+                        </channel>
+                    </channels>
                     <galleon-options>
                         <jboss-fork-embedded>${galleon.fork.embedded}</jboss-fork-embedded>
                     </galleon-options>
