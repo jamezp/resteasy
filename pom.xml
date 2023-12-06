@@ -6,6 +6,9 @@
         <version>2.0.4.Final</version>
         <relativePath/>
     </parent>
+    <modules>
+        <module>resteasy-manifest</module>
+    </modules>
 
     <modelVersion>4.0.0</modelVersion>
 

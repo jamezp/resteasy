@@ -111,13 +111,29 @@
                                             <name>domain</name>
                                         </excluded-packages>
                                     </feature-pack>
-                                    <feature-pack>
+                                    <!-- <feature-pack>
                                         <groupId>${resteasy.test.feature.pack.groupId}</groupId>
                                         <artifactId>${resteasy.test.feature.pack.artifactId}</artifactId>
                                         <version>${resteasy.test.feature.pack.version}</version>
                                         <inherit-configs>false</inherit-configs>
-                                    </feature-pack>
+                                    </feature-pack> -->
                                 </feature-packs>
+                                <channels>
+                                    <channel>
+                                        <manifest>
+                                            <groupId>org.jboss.resteasy</groupId>
+                                            <artifactId>resteasy-manifest</artifactId>
+                                            <version>${project.version}</version>
+                                        </manifest>
+                                    </channel>
+                                    <!--<channel>
+                                        <manifest>
+                                            <groupId>${resteasy.test.feature.pack.groupId}</groupId>
+                                            <artifactId>${resteasy.test.feature.pack.artifactId}</artifactId>
+                                            <version>${resteasy.test.feature.pack.version}</version>
+                                        </manifest>
+                                    </channel>-->
+                                </channels>
                             </configuration>
                         </execution>
                     </executions>

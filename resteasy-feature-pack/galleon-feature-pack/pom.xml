@@ -120,6 +120,8 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <fork-embedded>${galleon.fork.embedded}</fork-embedded>
+                            <generate-channel-manifest>true</generate-channel-manifest>
+                            <add-feature-packs-as-required-manifests>false</add-feature-packs-as-required-manifests>
                         </configuration>
                     </execution>
                 </executions>
