@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.client.jaxrs.PublisherRxInvoker;
 import org.reactivestreams.Publisher;
 
-@SuppressWarnings("unchecked")
+@Deprecated(forRemoval = true)
 public abstract class PublisherRxInvokerImpl implements PublisherRxInvoker {
 
     private final ClientInvocationBuilder builder;

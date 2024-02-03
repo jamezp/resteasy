@@ -1,0 +1,16 @@
+= Notes on implementing https://issues.redhat.com/browse/RESTEASY-3429[RESTEASY-3429]
+
+The current reactive API's and implementations that rely on reactivestreams need to be deprecated. These can be moved
+into a new project or into resteasy-rxjava2.
+
+There is already a `jakarta.ws.rs.client.RxInvokerProvider` which we really should be using instead of some custom
+API.
+
+== Implementing Flow.Publisher
+
+To implement the `java.util.concurrent.Flow.Publisher` we'll want to use something SmallRye Mutiny. This will need to
+be a separate module. We may want to return a `Uni` and/or `Multi` instead of a publisher directly. Some research
+needs to be done here.
+
+There is a start on this implementation using Mutiny. However, it needs a lot more work and some tests. We'll need
+to create a new module for this in the feature pack.

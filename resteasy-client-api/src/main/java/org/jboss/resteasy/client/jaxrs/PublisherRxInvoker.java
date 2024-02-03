@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.reactivestreams.Publisher;
 
+@Deprecated(forRemoval = true)
 public interface PublisherRxInvoker extends RxInvoker<Publisher<?>> {
     @Override
     Publisher<Response> get();

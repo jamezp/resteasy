@@ -552,6 +552,7 @@ public class ClientInvocation implements Invocation {
         }
     }
 
+    @Deprecated(forRemoval = true)
     class ReactiveInvocation {
         private final ReactiveClientHttpEngine reactiveEngine;
 
@@ -607,6 +608,7 @@ public class ClientInvocation implements Invocation {
      * If the client's HTTP engine implements {@link ReactiveClientHttpEngine} then you can access
      * the latter's {@link Publisher} via this method.
      */
+    @Deprecated(forRemoval = true)
     public Optional<ReactiveInvocation> reactive() {
         if (client.httpEngine() instanceof ReactiveClientHttpEngine) {
             return Optional.of(new ReactiveInvocation((ReactiveClientHttpEngine) client.httpEngine()));

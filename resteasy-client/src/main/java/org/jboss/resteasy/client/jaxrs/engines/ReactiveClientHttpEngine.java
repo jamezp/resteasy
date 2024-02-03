@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 import org.reactivestreams.Publisher;
 
+@Deprecated(forRemoval = true) // TODO (jrp) this needs to be moved to a new module and possibly be renamed
 public interface ReactiveClientHttpEngine extends AsyncClientHttpEngine {
     /**
      * This is the main bridge from RestEasy to a reactive implementation.
