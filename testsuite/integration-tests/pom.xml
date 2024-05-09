@@ -30,7 +30,7 @@
         <server.test.feature.pack.version>${version.org.wildfly}</server.test.feature.pack.version>
 
         <resteasy.channel.manifest.groupId>org.jboss.resteasy</resteasy.channel.manifest.groupId>
-        <resteasy.channel.manifest.artifactId>resteasy-manifest-7.0</resteasy.channel.manifest.artifactId>
+        <resteasy.channel.manifest.artifactId>resteasy-manifest-${channel.stream.version}</resteasy.channel.manifest.artifactId>
         <resteasy.channel.manifest.version>${project.version}</resteasy.channel.manifest.version>
         <version.org.jboss.shrinkwrap.resolver>3.3.0</version.org.jboss.shrinkwrap.resolver>
     </properties>

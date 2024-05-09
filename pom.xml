@@ -50,6 +50,7 @@
         <!-- Provisioning settings -->
         <galleon.fork.embedded>true</galleon.fork.embedded>
         <galleon.offline>false</galleon.offline>
+        <channel.stream.version>7.0</channel.stream.version>
 
         <!-- Plugins versions -->
         <version.javadoc.plugin>3.3.1</version.javadoc.plugin>

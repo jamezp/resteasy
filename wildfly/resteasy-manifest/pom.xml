@@ -29,7 +29,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>resteasy-manifest-7.0</artifactId>
+    <artifactId>resteasy-manifest</artifactId>
     <name>RESTEasy: Channel Manifest</name>
     <packaging>pom</packaging>
 
@@ -243,7 +243,54 @@
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}-${channel.stream.version}</finalName>
         <plugins>
+            <!-- Skip the default install process and install with a different artifactId -->
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>deploy-stream-${channel.stream.version}</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy-file</goal>
+                        </goals>
+                        <configuration>
+                            <url>${project.distributionManagement.repository.url}</url>
+                            <repositoryId>${project.distributionManagement.repository.id}</repositoryId>
+                            <file>${generated.manifest.file}</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.build.finalName}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>yaml</packaging>
+                            <classifier>manifest</classifier>
+                            <pomFile>${project.basedir}/pom.xml</pomFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Skip the default install process and install with a different artifactId -->
+            <plugin>
+                <artifactId>maven-install-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>install-stream-${channel.stream.version}</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <file>${generated.manifest.file}</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.build.finalName}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>yaml</packaging>
+                            <classifier>manifest</classifier>
+                            <pomFile>${project.basedir}/pom.xml</pomFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.wildfly</groupId>
                 <artifactId>wildfly-channel-maven-plugin</artifactId>
@@ -259,7 +306,7 @@
                 </executions>
                 <configuration>
                     <manifestName>RESTEasy manifest version ${project.version}</manifestName>
-                    <manifestId>${project.groupId}:${project.artifactId}</manifestId>
+                    <manifestId>${project.groupId}:${project.build.finalName}</manifestId>
                     <manifestDescription>Manifest for RESTEasy feature pack.</manifestDescription>
                 </configuration>
             </plugin>
