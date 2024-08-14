@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1134,6 +1135,44 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory
             }
         }
         return map;
+    }
+
+    @Override
+    public Map<MediaType, Class<?>> getSupportedMediaTypes(final Class<?> type, final Type genericType,
+            final Annotation[] annotations, final MediaType accept) {
+        final MediaTypeMap<SortedKey<MessageBodyWriter>> serverMessageBodyWriters = getServerMessageBodyWriters();
+        if (serverMessageBodyWriters == null) {
+            return Map.of();
+        }
+
+        final Map<MediaType, Class<?>> supportedMediaType = new LinkedHashMap<>();
+
+        for (SortedKey<MessageBodyWriter> sortedKey : serverMessageBodyWriters.getPossible(accept, type)) {
+            final MessageBodyWriter<?> serverMessageBodyWriter = sortedKey.getObj();
+            final String[] producesMediaTypes;
+            Class<?> mbwc = serverMessageBodyWriter.getClass();
+            final Produces produces = mbwc.getAnnotation(Produces.class);
+            if (produces == null) {
+                producesMediaTypes = new String[] { "*/*" };
+            } else {
+                producesMediaTypes = produces.value();
+            }
+            for (String produceValue : producesMediaTypes) {
+                final MediaType produce = MediaType.valueOf(produceValue);
+                if (serverMessageBodyWriter.isWriteable(type, genericType, annotations, produce)) {
+                    if (!mbwc.isInterface() && mbwc.getSuperclass() != null && !mbwc.getSuperclass().equals(Object.class)
+                            && mbwc.isSynthetic()) {
+                        mbwc = mbwc.getSuperclass();
+                    }
+                    Class writerType = Types.getTemplateParameterOfInterface(mbwc, MessageBodyWriter.class);
+                    if (writerType == null || !writerType.isAssignableFrom(type))
+                        continue;
+                    supportedMediaType.put(produce, writerType);
+                }
+            }
+        }
+
+        return supportedMediaType;
     }
 
     // use the tracingLogger enabled version please

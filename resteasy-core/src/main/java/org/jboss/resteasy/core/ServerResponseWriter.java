@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.Produces;
@@ -173,7 +173,8 @@ public class ServerResponseWriter {
             });
 
             try {
-                writerAction.toCompletableFuture().getNow(null); // give a chance at non-async exceptions to be propagated up
+                writerAction.toCompletableFuture()
+                        .getNow(null); // give a chance at non-async exceptions to be propagated up
             } catch (CompletionException x) {
                 // make sure we unwrap these horrors
                 SynchronousDispatcher.rethrow(x.getCause());
@@ -259,126 +260,78 @@ public class ServerResponseWriter {
     }
 
     @SuppressWarnings("rawtypes")
-    protected static MediaType getDefaultContentType(HttpRequest request, BuiltResponse jaxrsResponse,
-            ResteasyProviderFactory providerFactory, ResourceMethodInvoker method) {
+    protected static MediaType getDefaultContentType(final HttpRequest request, final BuiltResponse jaxrsResponse,
+            final ResteasyProviderFactory providerFactory, final ResourceMethodInvoker method) {
         // Note. If we get here before the request is executed, e.g., if a ContainerRequestFilter aborts,
         // chosen and method can be null.
 
         MediaType chosen = (MediaType) request.getAttribute(SegmentNode.RESTEASY_CHOSEN_ACCEPT);
-        boolean hasProduces = chosen != null
-                && Boolean.valueOf(chosen.getParameters().get(SegmentNode.RESTEASY_SERVER_HAS_PRODUCES));
-        hasProduces |= method != null && method.getProduces() != null && method.getProduces().length > 0;
-        hasProduces |= method != null && method.getMethod().getDeclaringClass().getAnnotation(Produces.class) != null;
-
-        if (hasProduces) {
-            //we have @Produces on the resource (method or class), so we're not going to scan for @Produces on MBws
-            if (!isConcrete(chosen)) {
-                //no concrete content-type set, compute again (JAX-RS 2.0 Section 3.8 step 2, first and second bullets)
-                MediaType[] produces = null;
-                if (method != null) {
-                    // pick most specific
-                    if (method.getProduces().length > 0) {
-                        produces = method.getProduces();
-                    } else {
-                        String[] producesValues = method.getMethod().getDeclaringClass().getAnnotation(Produces.class).value();
-                        produces = new MediaType[producesValues.length];
-                        for (int i = 0; i < producesValues.length; i++) {
-                            produces[i] = MediaType.valueOf(producesValues[i]);
-                        }
-                    }
-                }
-                //JAX-RS 2.0 Section 3.8.3
-                if (produces == null) {
-                    produces = new MediaType[] { MediaType.WILDCARD_TYPE };
-                }
-                //JAX-RS 2.0 Section 3.8.4
-                List<MediaType> accepts = request.getHttpHeaders().getAcceptableMediaTypes();
-                //JAX-RS 2.0 Section 3.8.5
-                List<SortableMediaType> M = new ArrayList<SortableMediaType>();
-                boolean hasStarStar = false;
-                boolean hasApplicationStar = false;
-                for (MediaType accept : accepts) {
-                    for (MediaType produce : produces) {
-                        SortableMediaType ms = mostSpecific(produce, null, accept, null);
-                        if (ms.isWildcardSubtype()) {
-                            hasStarStar |= ms.isWildcardType();
-                            hasApplicationStar |= ms.getType().equals("application");
-                        }
-                        M.add(ms);
-                    }
-                }
-                chosen = chooseFromM(chosen, M, hasStarStar, hasApplicationStar);
-            }
-        } else {
-            //no @Produces on resource (class / method), use MBWs
-            chosen = MediaType.WILDCARD_TYPE;
-            //JAX-RS 2.0 Section 3.8.2 step 3
-            Class type = jaxrsResponse.getEntityClass();
-            Type generic = jaxrsResponse.getGenericType();
-            if (generic == null) {
-                if (method != null && !Response.class.isAssignableFrom(method.getMethod().getReturnType()))
-                    generic = method.getGenericReturnType();
-                else
-                    generic = type;
-            }
-            Annotation[] annotations = jaxrsResponse.getAnnotations();
-            if (annotations == null && method != null) {
-                annotations = method.getMethodAnnotations();
-            }
-
-            //JAX-RS 2.0 Section 3.8.4, 3.8.5
-            List<MediaType> accepts = request.getHttpHeaders().getAcceptableMediaTypes();
-            if (accepts.isEmpty()) {
-                accepts = Collections.singletonList(MediaType.WILDCARD_TYPE);
-            }
-            List<SortableMediaType> M = new ArrayList<SortableMediaType>();
-            boolean hasStarStar = false;
-            boolean hasApplicationStar = false;
-            boolean pFound = false;
-            for (MediaType accept : accepts) {
-                //Instead of getting all the MBWs compatible with type/generic and then filtering using accept, we use
-                //getPossibleMessageBodyWritersMap to get the viable MBWs for the given type AND accept.
-                Map<MessageBodyWriter<?>, Class<?>> mbws = providerFactory.getPossibleMessageBodyWritersMap(type, generic,
-                        annotations, accept);
-                for (Entry<MessageBodyWriter<?>, Class<?>> e : mbws.entrySet()) {
-                    MessageBodyWriter<?> mbw = e.getKey();
-                    Class<?> wt = e.getValue();
-                    Produces produces = mbw.getClass().getAnnotation(Produces.class);
-                    if (produces == null)
-                        produces = WILDCARD_PRODUCES; // Spec, section 4.2.3 "Declaring Media Type Capabilities"
-                    for (String produceValue : produces.value()) {
-                        pFound = true;
-                        MediaType produce = MediaType.valueOf(produceValue);
-
-                        if (produce.isCompatible(accept)) {
-                            SortableMediaType ms = mostSpecific(produce, wt, accept, null);
-                            if (ms.isWildcardSubtype()) {
-                                hasStarStar |= ms.isWildcardType();
-                                hasApplicationStar |= ms.getType().equals("application");
-                            }
-                            M.add(ms);
-                        }
-                    }
-                }
-            }
-            if (!pFound) // JAX-RS 2.0 Section 3.8.3
-            {
-                for (MediaType accept : accepts) {
-                    MediaType produce = MediaType.WILDCARD_TYPE;
-                    if (produce.isCompatible(accept)) {
-                        SortableMediaType ms = mostSpecific(produce, null, accept, null);
-                        if (ms.isWildcardSubtype()) {
-                            hasStarStar |= ms.isWildcardType();
-                            hasApplicationStar |= ms.getType().equals("application");
-                        }
-                        M.add(ms);
-                    }
-                }
-            }
-            chosen = chooseFromM(chosen, M, hasStarStar, hasApplicationStar);
+        // TODO (jrp) we need to support this, but for testing purposes I'm leaving it off
+        // boolean hasProduces = chosen != null
+        //        && Boolean.valueOf(chosen.getParameters().get(SegmentNode.RESTEASY_SERVER_HAS_PRODUCES));
+        // Get the response type and generic type
+        Class type = jaxrsResponse.getEntityClass();
+        Type generic = jaxrsResponse.getGenericType();
+        if (generic == null) {
+            if (method != null && !Response.class.isAssignableFrom(method.getMethod().getReturnType()))
+                generic = method.getGenericReturnType();
+            else
+                generic = type;
         }
+        Annotation[] annotations = jaxrsResponse.getAnnotations();
+        if (annotations == null && method != null) {
+            annotations = method.getMethodAnnotations();
+        }
+        // Gather the producible media types, per Jakarta REST 3.1 section 3.8 item 2
+        // https://jakarta.ee/specifications/restful-ws/3.1/jakarta-restful-ws-spec-3.1#determine_response_type
+        final List<SortableMediaType> P = new ArrayList<>();
+        if (method != null && method.hasProduces()) {
+            P.addAll(Stream.of(method.getProduces())
+                    .map((m) -> new SortableMediaType(m.getType(), m.getSubtype(), m.getParameters(), null)).toList());
+        } else if (method != null && method.getMethod().getDeclaringClass().isAnnotationPresent(Produces.class)) {
+            P.addAll(Stream.of(method.getMethod().getDeclaringClass().getAnnotation(Produces.class).value())
+                    .map(MediaType::valueOf)
+                    .map((m) -> new SortableMediaType(m.getType(), m.getSubtype(), m.getParameters(), null)).toList());
+        } else {
+            // The method nor the class have a @Produces, gather the media types the MessageBodyWriter's produce
+            // based on the type, generic type annotations and */*.
+            final var mediaTypes = providerFactory.getSupportedMediaTypes(type, generic, annotations, MediaType.WILDCARD_TYPE);
+            for (var entry : mediaTypes.entrySet()) {
+                final MediaType produce = entry.getKey();
+                P.add(new SortableMediaType(produce.getType(), produce.getSubtype(), produce.getParameters(),
+                        entry.getValue()));
+            }
+        }
+
+        // P is empty, P={'*/*'}, step 3
+        if (P.isEmpty()) {
+            P.add(new SortableMediaType("*", "*", Map.of(), null));
+        }
+
+        // Step 4, obtain the acceptable media type defaulting to */* if not found
+        final List<MediaType> accepts = request.getHttpHeaders().getAcceptableMediaTypes();
+        if (accepts.isEmpty()) {
+            accepts.add(MediaType.WILDCARD_TYPE);
+        }
+        final List<SortableMediaType> M = new ArrayList<>();
+        // Step 5, a must be compatible with p, if so add the most compatible media type to M.
+        for (MediaType accept : accepts) {
+            for (MediaType produce : P) {
+                if (accept.isCompatible(produce)) {
+                    SortableMediaType ms = mostSpecific(produce, null, accept, null);
+                    M.add(ms);
+                }
+            }
+        }
+        if (chosen == null) {
+            chosen = MediaType.WILDCARD_TYPE;
+        }
+        // Step 6, 7 and 8. Checks if M is empty and throws a 406 if it is. Sorts the media types, and selects the
+        // best option
+        chosen = chooseFromM(chosen, M, chosen.isWildcardType(),
+                chosen.getSubtype().equalsIgnoreCase("application") && chosen.isWildcardSubtype());
         if (chosen.getParameters().containsKey(SegmentNode.RESTEASY_SERVER_HAS_PRODUCES)) {
-            Map<String, String> map = new HashMap<String, String>(chosen.getParameters());
+            Map<String, String> map = new HashMap<>(chosen.getParameters());
             map.remove(SegmentNode.RESTEASY_SERVER_HAS_PRODUCES);
             map.remove(SegmentNode.RESTEASY_SERVER_HAS_PRODUCES_LC);
             chosen = new MediaType(chosen.getType(), chosen.getSubtype(), map);
@@ -386,7 +339,7 @@ public class ServerResponseWriter {
         boolean hasQ = chosen.getParameters().containsKey("q");
         boolean hasQs = chosen.getParameters().containsKey("qs");
         if (hasQ || hasQs) {
-            Map<String, String> map = new HashMap<String, String>(chosen.getParameters());
+            Map<String, String> map = new HashMap<>(chosen.getParameters());
             if (hasQ) {
                 map.remove("q");
             }

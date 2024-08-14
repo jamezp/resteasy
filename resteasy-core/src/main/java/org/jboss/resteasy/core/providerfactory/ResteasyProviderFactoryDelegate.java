@@ -441,6 +441,12 @@ public class ResteasyProviderFactoryDelegate extends ResteasyProviderFactory {
         return resteasyProviderFactoryDelegator.getPossibleMessageBodyWritersMap(type, genericType, annotations, accept);
     }
 
+    @Override
+    public Map<MediaType, Class<?>> getSupportedMediaTypes(final Class<?> type, final Type genericType,
+            final Annotation[] annotations, final MediaType accept) {
+        return resteasyProviderFactoryDelegator.getSupportedMediaTypes(type, genericType, annotations, accept);
+    }
+
     @SuppressWarnings("deprecation")
     @Override
     public <T> MessageBodyWriter<T> getServerMessageBodyWriter(Class<T> type, Type genericType, Annotation[] annotations,

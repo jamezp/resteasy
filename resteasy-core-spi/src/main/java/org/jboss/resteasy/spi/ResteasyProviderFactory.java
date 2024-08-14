@@ -272,6 +272,22 @@ public abstract class ResteasyProviderFactory extends RuntimeDelegate
     public abstract Map<MessageBodyWriter<?>, Class<?>> getPossibleMessageBodyWritersMap(Class type, Type genericType,
             Annotation[] annotations, MediaType accept);
 
+    /**
+     * Find all supported media types for the {@link MessageBodyWriter}'s included in this application.
+     *
+     * @param type        the type of the entity
+     * @param genericType the generic type for the entity, if applicable
+     * @param annotations any qualifying annotations
+     * @param accept      the accept type
+     *
+     * @return a map of the supported media types as the key and the generic type of the {@link MessageBodyWriter} as
+     *         the value
+     */
+    public Map<MediaType, Class<?>> getSupportedMediaTypes(Class<?> type, Type genericType, Annotation[] annotations,
+            MediaType accept) {
+        return Map.of();
+    }
+
     // use the tracingLogger enabled version please
     @Deprecated
     public abstract <T> MessageBodyWriter<T> getServerMessageBodyWriter(Class<T> type, Type genericType,
