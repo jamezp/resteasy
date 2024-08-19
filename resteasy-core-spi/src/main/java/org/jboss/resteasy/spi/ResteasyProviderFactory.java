@@ -280,12 +280,11 @@ public abstract class ResteasyProviderFactory extends RuntimeDelegate
      * @param annotations any qualifying annotations
      * @param accept      the accept type
      *
-     * @return a map of the supported media types as the key and the generic type of the {@link MessageBodyWriter} as
-     *         the value
+     * @return a set of supported media types
      */
-    public Map<MediaType, Class<?>> getSupportedMediaTypes(Class<?> type, Type genericType, Annotation[] annotations,
+    public Set<MediaType> getSupportedMediaTypes(Class<?> type, Type genericType, Annotation[] annotations,
             MediaType accept) {
-        return Map.of();
+        return Set.of();
     }
 
     // use the tracingLogger enabled version please

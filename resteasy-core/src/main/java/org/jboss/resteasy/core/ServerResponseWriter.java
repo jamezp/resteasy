@@ -296,10 +296,8 @@ public class ServerResponseWriter {
             // The method nor the class have a @Produces, gather the media types the MessageBodyWriter's produce
             // based on the type, generic type annotations and */*.
             final var mediaTypes = providerFactory.getSupportedMediaTypes(type, generic, annotations, MediaType.WILDCARD_TYPE);
-            for (var entry : mediaTypes.entrySet()) {
-                final MediaType produce = entry.getKey();
-                P.add(new SortableMediaType(produce.getType(), produce.getSubtype(), produce.getParameters(),
-                        entry.getValue()));
+            for (var mediaType : mediaTypes) {
+                P.add(new SortableMediaType(mediaType.getType(), mediaType.getSubtype(), mediaType.getParameters(), null));
             }
         }
 

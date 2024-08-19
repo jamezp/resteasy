@@ -442,7 +442,7 @@ public class ResteasyProviderFactoryDelegate extends ResteasyProviderFactory {
     }
 
     @Override
-    public Map<MediaType, Class<?>> getSupportedMediaTypes(final Class<?> type, final Type genericType,
+    public Set<MediaType> getSupportedMediaTypes(final Class<?> type, final Type genericType,
             final Annotation[] annotations, final MediaType accept) {
         return resteasyProviderFactoryDelegator.getSupportedMediaTypes(type, genericType, annotations, accept);
     }

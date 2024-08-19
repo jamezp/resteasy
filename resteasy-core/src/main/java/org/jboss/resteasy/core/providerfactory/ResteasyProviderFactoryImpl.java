@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1138,14 +1138,14 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory
     }
 
     @Override
-    public Map<MediaType, Class<?>> getSupportedMediaTypes(final Class<?> type, final Type genericType,
+    public Set<MediaType> getSupportedMediaTypes(final Class<?> type, final Type genericType,
             final Annotation[] annotations, final MediaType accept) {
         final MediaTypeMap<SortedKey<MessageBodyWriter>> serverMessageBodyWriters = getServerMessageBodyWriters();
         if (serverMessageBodyWriters == null) {
-            return Map.of();
+            return Set.of();
         }
 
-        final Map<MediaType, Class<?>> supportedMediaType = new LinkedHashMap<>();
+        final Set<MediaType> supportedMediaType = new LinkedHashSet<>();
 
         for (SortedKey<MessageBodyWriter> sortedKey : serverMessageBodyWriters.getPossible(accept, type)) {
             final MessageBodyWriter<?> serverMessageBodyWriter = sortedKey.getObj();
@@ -1160,14 +1160,7 @@ public class ResteasyProviderFactoryImpl extends ResteasyProviderFactory
             for (String produceValue : producesMediaTypes) {
                 final MediaType produce = MediaType.valueOf(produceValue);
                 if (serverMessageBodyWriter.isWriteable(type, genericType, annotations, produce)) {
-                    if (!mbwc.isInterface() && mbwc.getSuperclass() != null && !mbwc.getSuperclass().equals(Object.class)
-                            && mbwc.isSynthetic()) {
-                        mbwc = mbwc.getSuperclass();
-                    }
-                    Class writerType = Types.getTemplateParameterOfInterface(mbwc, MessageBodyWriter.class);
-                    if (writerType == null || !writerType.isAssignableFrom(type))
-                        continue;
-                    supportedMediaType.put(produce, writerType);
+                    supportedMediaType.add(produce);
                 }
             }
         }
