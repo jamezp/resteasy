@@ -83,7 +83,7 @@ public class AbortedResponse extends FinalizedClientResponse {
 
     @Override
     protected void setInputStream(InputStream is) {
-        this.is = is;
+        super.setInputStream(is);
     }
 
     /**

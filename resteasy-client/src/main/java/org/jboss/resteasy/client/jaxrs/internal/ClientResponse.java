@@ -1,9 +1,13 @@
 package org.jboss.resteasy.client.jaxrs.internal;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.ConstantBootstraps;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -14,6 +18,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.Providers;
 import jakarta.ws.rs.ext.ReaderInterceptor;
 
+import org.jboss.resteasy.client.jaxrs.i18n.LogMessages;
 import org.jboss.resteasy.client.jaxrs.i18n.Messages;
 import org.jboss.resteasy.core.Headers;
 import org.jboss.resteasy.core.ProvidersContextRetainer;
@@ -146,10 +151,10 @@ public abstract class ClientResponse extends BuiltResponse {
         return is != null ? new AbstractBuiltResponse.InputStreamWrapper<ClientResponse>(is, this) : null;
     }
 
-    // Method is defined here because the "protected" abstract declaration
-    // in AbstractBuiltResponse is not accessible to classes in this module.
-    // Making the method "public" causes different errors.
-    protected abstract void setInputStream(InputStream is);
+    @Override
+    protected void setInputStream(final InputStream is) {
+        super.setInputStream(is);
+    }
 
     // this is synchronized in conjunction with finalize to protect against premature finalize called by the GC
     @Override

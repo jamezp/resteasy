@@ -1,9 +1,13 @@
 package org.jboss.resteasy.specimpl;
 
+import java.io.Closeable;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.ConstantBootstraps;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
@@ -27,6 +31,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.core.Headers;
 import org.jboss.resteasy.plugins.delegates.LocaleDelegate;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
 import org.jboss.resteasy.resteasy_jaxrs.i18n.Messages;
 import org.jboss.resteasy.spi.HeaderValueProcessor;
 import org.jboss.resteasy.spi.HttpResponseCodes;
@@ -42,6 +47,8 @@ import org.jboss.resteasy.util.DateUtil;
  */
 @SuppressWarnings("rawtypes")
 public abstract class AbstractBuiltResponse extends Response {
+    private static final VarHandle INPUT_STREAM_HANDLER = ConstantBootstraps.fieldVarHandle(MethodHandles.lookup(), "is",
+            VarHandle.class, AbstractBuiltResponse.class, InputStream.class);
     protected Object entity;
     protected int status = HttpResponseCodes.SC_OK;
     protected String reason = "Unknown Code";
@@ -51,7 +58,7 @@ public abstract class AbstractBuiltResponse extends Response {
     protected Type genericType;
     protected HeaderValueProcessor processor;
     protected volatile boolean isClosed;
-    protected InputStream is;
+    protected volatile InputStream is;
     protected byte[] bufferedEntity;
     protected volatile boolean streamRead;
     protected volatile boolean streamFullyRead;
@@ -73,7 +80,14 @@ public abstract class AbstractBuiltResponse extends Response {
 
     protected abstract InputStream getInputStream();
 
-    protected abstract void setInputStream(InputStream is);
+    protected void setInputStream(final InputStream is) {
+        InputStream old = this.is;
+        safeClose(old);
+        while (!INPUT_STREAM_HANDLER.compareAndSet(this, old, is)) {
+            old = this.is;
+            safeClose(old);
+        }
+    }
 
     protected abstract InputStream getEntityStream();
 
@@ -473,6 +487,15 @@ public abstract class AbstractBuiltResponse extends Response {
         if (link == null)
             return null;
         return Link.fromLink(link);
+    }
+
+    private static void safeClose(final Closeable closeable) {
+        try {
+            if (closeable != null)
+                closeable.close();
+        } catch (IOException e) {
+            LogMessages.LOGGER.debugf(e, "Failed to close %s", closeable);
+        }
     }
 
     private final class LinkHeaders {

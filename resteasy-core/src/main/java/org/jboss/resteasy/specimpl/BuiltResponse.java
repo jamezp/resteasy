@@ -172,13 +172,14 @@ public class BuiltResponse extends AbstractBuiltResponse {
     }
 
     protected void setInputStream(InputStream is) {
-        this.is = is;
+        super.setInputStream(is);
         resetEntity();
     }
 
     protected InputStream getInputStream() {
+        final InputStream is = this.is;
         if (is == null && entity != null && entity instanceof InputStream) {
-            is = (InputStream) entity;
+            super.setInputStream((InputStream) entity);
         }
         return is;
     }
@@ -191,16 +192,18 @@ public class BuiltResponse extends AbstractBuiltResponse {
     @Override
     public void releaseConnection(boolean consumeInputStream) throws IOException {
         try {
+            final InputStream is = this.is;
             if (is != null) {
                 if (consumeInputStream) {
                     while (is.read() > 0) {
                     }
                 }
                 is.close();
-                is = null;
             }
         } catch (IOException e) {
 
+        } finally {
+            super.setInputStream(null);
         }
 
     }

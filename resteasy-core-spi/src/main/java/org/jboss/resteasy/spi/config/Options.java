@@ -92,6 +92,19 @@ public class Options<T> {
             Integer.class,
             Functions.singleton(() -> 204));
 
+    /**
+     * An option for defining the {@link javax.net.ssl.SSLContext#getInstance(String) SSLContext} protocol for the
+     * {@linkplain jakarta.ws.rs.client.Client REST client}.
+     * <p>
+     * The default is TLS.
+     * </p>
+     *
+     * @since 6.3
+     */
+    public static final Options<String> CLIENT_SSL_CONTEXT_PROTOCOL = new Options<>("dev.resteasy.client.ssl.context.protocol",
+            String.class,
+            () -> "TLS");
+
     private final String key;
     private final Class<T> name;
     private final Supplier<T> dftValue;
