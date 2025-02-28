@@ -21,6 +21,7 @@ package org.jboss.resteasy.spi.config;
 
 import java.nio.file.Path;
 import java.security.AccessController;
+import java.security.MessageDigest;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,6 +94,17 @@ public class Options<T> {
             "dev.resteasy.client.ssl.context.algorithm",
             String.class,
             () -> "TLS");
+
+    /**
+     * An option for defining the hashing algorithm.
+     * <p>
+     * If available, the default is SHA-1. If SHA-1 is not available, SHA-256 is used.
+     * </p>
+     */
+    public static final Options<String> HASH_MESSAGE_DIGEST_ALGORITHM = new Options<>(
+            "dev.resteasy.hash.message.digest.algorithm",
+            String.class,
+            Functions.singleton(Options::determineDefaultDigestAlgorithm));
 
     /**
      * An option which allows which HTTP status code should be sent when the {@link SseEventSink#close()} is invoked.
@@ -221,5 +233,15 @@ public class Options<T> {
             return System.getProperty("java.io.tmpdir");
         }
         return AccessController.doPrivileged((PrivilegedAction<String>) () -> System.getProperty("java.io.tmpdir"));
+    }
+
+    private static String determineDefaultDigestAlgorithm() {
+        String algorithm = "SHA-1";
+        try {
+            MessageDigest.getInstance(algorithm);
+        } catch (Throwable ignore) {
+            algorithm = "SHA-256";
+        }
+        return algorithm;
     }
 }

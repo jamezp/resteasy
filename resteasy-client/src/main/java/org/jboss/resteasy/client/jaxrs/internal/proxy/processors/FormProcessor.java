@@ -20,6 +20,7 @@ import jakarta.ws.rs.client.WebTarget;
 import org.jboss.resteasy.client.jaxrs.internal.ClientConfiguration;
 import org.jboss.resteasy.client.jaxrs.internal.ClientInvocation;
 import org.jboss.resteasy.spi.LoggableFailure;
+import org.jboss.resteasy.spi.config.Options;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -63,7 +64,7 @@ public class FormProcessor implements InvocationProcessor, WebTargetProcessor {
             throws Exception {
         long hash = 0;
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream(512);
-        MessageDigest messagedigest = MessageDigest.getInstance("SHA");
+        MessageDigest messagedigest = MessageDigest.getInstance(Options.HASH_MESSAGE_DIGEST_ALGORITHM.getValue());
         DataOutputStream dataoutputstream = new DataOutputStream(new DigestOutputStream(bytearrayoutputstream, messagedigest));
         dataoutputstream.writeUTF(methodDesc);
         dataoutputstream.flush();

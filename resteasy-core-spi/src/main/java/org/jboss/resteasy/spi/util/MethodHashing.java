@@ -6,6 +6,8 @@ import java.lang.reflect.Method;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 
+import org.jboss.resteasy.spi.config.Options;
+
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
@@ -26,7 +28,7 @@ public final class MethodHashing {
             throws Exception {
         long hash = 0;
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream(512);
-        MessageDigest messagedigest = MessageDigest.getInstance("SHA");
+        MessageDigest messagedigest = MessageDigest.getInstance(Options.HASH_MESSAGE_DIGEST_ALGORITHM.getValue());
         DataOutputStream dataoutputstream = new DataOutputStream(new DigestOutputStream(bytearrayoutputstream, messagedigest));
         dataoutputstream.writeUTF(methodDesc);
         dataoutputstream.flush();
