@@ -113,6 +113,15 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <dependencies>
+        <!-- TODO (jrp) Remove this as we're just testing -->
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client-java-http</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>

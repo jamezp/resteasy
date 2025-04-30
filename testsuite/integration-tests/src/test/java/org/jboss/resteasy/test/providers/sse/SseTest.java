@@ -27,8 +27,8 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit5.ArquillianExtension;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.engines.ClientHttpEngineBuilder43;
 import org.jboss.resteasy.plugins.providers.sse.client.SseEventSourceImpl;
 import org.jboss.resteasy.plugins.providers.sse.client.SseEventSourceImpl.SourceBuilder;
 import org.jboss.resteasy.utils.PortProviderUtil;
@@ -261,7 +261,9 @@ public class SseTest {
         final CountDownLatch latch = new CountDownLatch(10);
         final List<String> results = new ArrayList<String>();
         final AtomicInteger errors = new AtomicInteger(0);
-        ResteasyClient client = ((ResteasyClientBuilder) ClientBuilder.newBuilder()).connectionPoolSize(10).build();
+        // TODO (jrp) for some reason this doesn't work with HTTP/2 so we need to look at why.
+        Client client = ((ResteasyClientBuilder) ClientBuilder.newBuilder())
+                .connectionPoolSize(10).register(new ClientHttpEngineBuilder43()).build();
         String requestPath = PortProviderUtil.generateURL("/service/server-sent-events",
                 SseTest.class.getSimpleName(), PortProviderUtil.getHost(), proxyPort);
         WebTarget target = client.target(requestPath);
