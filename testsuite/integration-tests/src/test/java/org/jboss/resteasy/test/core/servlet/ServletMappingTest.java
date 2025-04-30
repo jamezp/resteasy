@@ -74,7 +74,7 @@ public class ServletMappingTest {
      */
     @Test
     public void testNoDefaultsResourceNewRESTEasyClient() throws Exception {
-        WebTarget target = client.target(generateURL("/resteasy/rest/basic"));
+        WebTarget target = client.target(generateURL("resteasy/rest/basic"));
         Response response = target.request().get();
         Assertions.assertEquals(HttpResponseCodes.SC_OK, response.getStatus());
         Assertions.assertEquals("basic", response.readEntity(String.class),
@@ -89,7 +89,7 @@ public class ServletMappingTest {
     @Test
     public void testNoDefaultsResourceApacheClient() throws Exception {
         CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(generateURL("/resteasy/rest/basic"));
+        HttpGet httpGet = new HttpGet(generateURL("resteasy/rest/basic"));
         CloseableHttpResponse response1 = httpclient.execute(httpGet);
 
         try {
@@ -107,7 +107,7 @@ public class ServletMappingTest {
      */
     @Test
     public void testFormParamNewRESTEasyClient() {
-        ResteasyWebTarget target = client.target(generateURL("/resteasy/rest"));
+        ResteasyWebTarget target = client.target(generateURL("resteasy/rest"));
         ServletMappingProxy client = target.proxyBuilder(ServletMappingProxy.class).build();
         final String result = client.postForm("value");
         Assertions.assertEquals(result, "value", WRONG_RESPONSE_ERROR_MSG);
