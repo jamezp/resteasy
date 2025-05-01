@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 import jakarta.ws.rs.container.DynamicFeature;
 import jakarta.ws.rs.core.Application;
@@ -18,6 +20,7 @@ import jakarta.ws.rs.core.FeatureContext;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.Providers;
 
+import org.jboss.resteasy.concurrent.ContextualExecutors;
 import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl;
 import org.jboss.resteasy.plugins.interceptors.RoleBasedSecurityFeature;
 import org.jboss.resteasy.plugins.providers.JaxrsServerFormUrlEncodedProvider;
@@ -92,6 +95,8 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment {
     protected String paramMapping;
     protected Map<String, Object> properties;
     protected boolean statisticsEnabled;
+    private ExecutorService executorService;
+    private ScheduledExecutorService scheduledExecutorService;
 
     @SuppressWarnings("rawtypes")
     public ResteasyDeploymentImpl() {
@@ -130,6 +135,9 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment {
     }
 
     private void startInternal() {
+        // We will first create the executors
+        executorService = ContextualExecutors.newThreadPool();
+        scheduledExecutorService = ContextualExecutors.newScheduledThreadPool();
         initializeFactory();
         initializeDispatcher();
         pushContext();
@@ -612,6 +620,29 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment {
 
         ResteasyProviderFactory.clearInstanceIfEqual(threadLocalProviderFactory);
         ResteasyProviderFactory.clearInstanceIfEqual(providerFactory);
+        // Shutdown the executors
+        shutdownExecutor(executorService, "executor");
+        shutdownExecutor(scheduledExecutorService, "scheduled executor");
+    }
+
+    private void shutdownExecutor(ExecutorService executor, String name) {
+        if (executor != null) {
+            executor.shutdown(); // Graceful shutdown first
+            try {
+                if (!executor.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)) {
+                    LogMessages.LOGGER.debugf("Executor %s did not terminate in time, forcing shutdown", name);
+                    final List<Runnable> pending = executor.shutdownNow();
+                    if (!pending.isEmpty()) {
+                        LogMessages.LOGGER.debugf("Executor %s had %d pending tasks that were not executed", name,
+                                pending.size());
+                    }
+                }
+            } catch (InterruptedException e) {
+                LogMessages.LOGGER.debugf(e, "Interrupted while waiting for executor %s to shutdown", name);
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**
@@ -1022,6 +1053,22 @@ public class ResteasyDeploymentImpl implements ResteasyDeployment {
     @Override
     public void setStatisticsEnabled(boolean statisticsEnabled) {
         this.statisticsEnabled = statisticsEnabled;
+    }
+
+    @Override
+    public ExecutorService getExecutorService() {
+        if (executorService == null || executorService.isShutdown()) {
+            throw Messages.MESSAGES.executorNotAvailable();
+        }
+        return executorService;
+    }
+
+    @Override
+    public ScheduledExecutorService getScheduledExecutorService() {
+        if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {
+            throw Messages.MESSAGES.executorNotAvailable();
+        }
+        return scheduledExecutorService;
     }
 
     private static Set<Class<?>> loadServices(final Class<?> service) {

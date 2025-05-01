@@ -680,7 +680,8 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder {
         if (asyncExecutor != null) {
             return ContextualExecutors.wrap(asyncExecutor, !cleanupExecutor);
         }
-        return ContextualExecutors.threadPool();
+        // Do not use the executor from the deployment for a client
+        return ContextualExecutors.threadPool(false);
     }
 
     private record ProxyInfo(String scheme, String host, int port) {
