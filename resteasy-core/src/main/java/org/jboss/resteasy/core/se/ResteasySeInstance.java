@@ -28,6 +28,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -99,8 +100,12 @@ public class ResteasySeInstance implements Instance {
      */
     public static CompletionStage<Instance> create(final Application application,
             final Configuration configuration) {
-        final ExecutorService executor = ContextualExecutors.threadPool();
+        // Remove any previous context
+        ResteasyContext.clearContextData();
+        final ExecutorService executor = createExecutor();
         return CompletableFuture.supplyAsync(() -> {
+            final ClassLoader currentTccl = SecurityActions.getContextClassLoader();
+            SecurityActions.setContextClassLoader(application.getClass().getClassLoader());
             try {
                 final Configuration config = ResteasySeConfiguration.from(configuration);
                 final EmbeddedServer server = EmbeddedServers.findServer(config);
@@ -124,6 +129,8 @@ public class ResteasySeInstance implements Instance {
                 return new ResteasySeInstance(server, config, executor);
             } catch (Throwable t) {
                 throw new CompletionException(t);
+            } finally {
+                SecurityActions.setContextClassLoader(currentTccl);
             }
         }, executor);
     }
@@ -146,8 +153,12 @@ public class ResteasySeInstance implements Instance {
      */
     public static CompletionStage<Instance> create(final Class<? extends Application> applicationClass,
             final Configuration configuration) {
-        final ExecutorService executor = ContextualExecutors.threadPool();
+        // Remove any previous context
+        ResteasyContext.clearContextData();
+        final ExecutorService executor = createExecutor();
         return CompletableFuture.supplyAsync(() -> {
+            final ClassLoader currentTccl = SecurityActions.getContextClassLoader();
+            SecurityActions.setContextClassLoader(applicationClass.getClassLoader());
             try {
                 final Configuration config = ResteasySeConfiguration.from(configuration);
                 final EmbeddedServer server = EmbeddedServers.findServer(config);
@@ -175,6 +186,8 @@ public class ResteasySeInstance implements Instance {
                 return new ResteasySeInstance(server, config, executor);
             } catch (Throwable t) {
                 throw new CompletionException(t);
+            } finally {
+                SecurityActions.setContextClassLoader(currentTccl);
             }
         }, executor);
     }
@@ -197,6 +210,8 @@ public class ResteasySeInstance implements Instance {
                 ResteasyContext.pushContextDataMap(currentContext);
                 try {
                     server.stop();
+                    // Stop the deployment on the server
+                    server.getDeployment().stop();
                     cf.complete(stopResult);
                 } finally {
                     // Finally clear current threads context
@@ -273,5 +288,9 @@ public class ResteasySeInstance implements Instance {
             return (Boolean) value;
         }
         return true;
+    }
+
+    private static ExecutorService createExecutor() {
+        return ContextualExecutors.wrap(Executors.newSingleThreadExecutor(), false);
     }
 }

@@ -53,6 +53,25 @@ final class SecurityActions {
         return AccessController.doPrivileged((PrivilegedAction<ClassLoader>) c::getClassLoader);
     }
 
+    static void setContextClassLoader(final ClassLoader cl) {
+        if (System.getSecurityManager() == null) {
+            Thread.currentThread().setContextClassLoader(cl);
+        } else {
+            AccessController.doPrivileged((PrivilegedAction<?>) () -> {
+                Thread.currentThread().setContextClassLoader(cl);
+                return null;
+            });
+        }
+    }
+
+    static ClassLoader getContextClassLoader() {
+        if (System.getSecurityManager() == null) {
+            return Thread.currentThread().getContextClassLoader();
+        }
+        return AccessController.doPrivileged((PrivilegedAction<ClassLoader>) () -> Thread.currentThread()
+                .getContextClassLoader());
+    }
+
     private static ClassLoader currentClassLoader() {
         if (System.getSecurityManager() == null) {
             ClassLoader cl = Thread.currentThread().getContextClassLoader();

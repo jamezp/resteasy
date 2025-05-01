@@ -3,6 +3,8 @@ package org.jboss.resteasy.spi;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 import jakarta.ws.rs.core.Application;
 
@@ -228,4 +230,26 @@ public interface ResteasyDeployment {
     void setProperty(String key, Object value);
 
     void setStatisticsEnabled(boolean statisticsEnabled);
+
+    /**
+     * Returns the executor service to use for the deployment.
+     *
+     * @return the executor service to use
+     *
+     * @throws IllegalStateException if the deployment has not been started or is stopped
+     */
+    default ExecutorService getExecutorService() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the scheduled executor service to use for the deployment.
+     *
+     * @return the scheduled executor service to use
+     *
+     * @throws IllegalStateException if the deployment has not been started or is stopped
+     */
+    default ScheduledExecutorService getScheduledExecutorService() {
+        throw new UnsupportedOperationException();
+    }
 }
