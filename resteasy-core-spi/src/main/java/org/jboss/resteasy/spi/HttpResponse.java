@@ -7,6 +7,8 @@ import java.io.OutputStream;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.NewCookie;
 
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
+
 /**
  * Bridge interface between the base Resteasy JAX-RS implementation and the actual HTTP transport (i.e. a servlet container)
  *
@@ -43,6 +45,7 @@ public interface HttpResponse extends Closeable {
     void reset();
 
     default void close() throws IOException {
+        LogMessages.LOGGER.warnf("HttpResponse.close() invoked on %s: getOutputStream() %s", this, getOutputStream());
         // RESTEASY-1650
         getOutputStream().close();
     }

@@ -136,24 +136,24 @@ public class SseBroadcasterImpl implements SseBroadcaster {
         checkClosed();
         CompletionStage<?> ret = CompletableFuture.completedFuture(null);
         for (SseEventSink eventSink : outputQueue) {
-            ret = ret.thenCompose(v -> {
-                try {
-                    return eventSink.send(event)
-                            .exceptionally(err -> {
-                                // do not propagate the exception to the returned CF
-                                // apparently, the goal is to close this sink and not report the error
-                                // of the broadcast operation
-                                notifyOnErrorListeners(eventSink, err);
-                                return null;
-                            });
-                } catch (Exception e) {
-                    // do not propagate the exception to the returned CF
-                    // apparently, the goal is to close this sink and not report the error
-                    // of the broadcast operation
-                    notifyOnErrorListeners(eventSink, e);
-                    return CompletableFuture.completedFuture(null);
-                }
-            });
+            try {
+                return eventSink.send(event)
+                        .exceptionally(err -> {
+                            LogMessages.LOGGER.errorf(err, "An error occurred while trying to broadcast event %s", event);
+                            // do not propagate the exception to the returned CF
+                            // apparently, the goal is to close this sink and not report the error
+                            // of the broadcast operation
+                            notifyOnErrorListeners(eventSink, err);
+                            return null;
+                        });
+            } catch (Exception e) {
+                // do not propagate the exception to the returned CF
+                // apparently, the goal is to close this sink and not report the error
+                // of the broadcast operation
+                notifyOnErrorListeners(eventSink, e);
+                LogMessages.LOGGER.errorf(e, "An error occurred while trying to broadcast event %s", event);
+                return CompletableFuture.completedFuture(null);
+            }
         }
         return ret;
     }

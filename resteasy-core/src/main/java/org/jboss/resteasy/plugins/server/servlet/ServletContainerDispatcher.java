@@ -1,6 +1,7 @@
 package org.jboss.resteasy.plugins.server.servlet;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -11,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.SecurityContext;
 
 import org.jboss.resteasy.core.ResteasyContext;
@@ -21,6 +24,7 @@ import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
 import org.jboss.resteasy.resteasy_jaxrs.i18n.Messages;
 import org.jboss.resteasy.specimpl.ResteasyHttpHeaders;
 import org.jboss.resteasy.specimpl.ResteasyUriInfo;
+import org.jboss.resteasy.spi.AsyncOutputStream;
 import org.jboss.resteasy.spi.Dispatcher;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.HttpResponse;
@@ -208,7 +212,9 @@ public class ServletContainerDispatcher {
                 return;
             }
 
-            try (HttpResponse theResponse = responseFactory.createResteasyHttpResponse(response, request)) {
+            // TODO (jrp) this is wrong as not much ends up getting closed given the output streams are deferred for async writs
+            try (HttpResponse theResponse = new WrappedHttpResponse(
+                    responseFactory.createResteasyHttpResponse(response, request))) {
                 HttpRequest in = requestFactory.createResteasyHttpRequest(httpMethod, request, headers, uriInfo, theResponse,
                         response);
 
@@ -232,6 +238,90 @@ public class ServletContainerDispatcher {
                 ThreadLocalResteasyProviderFactory.pop();
             }
 
+        }
+    }
+
+    private static class WrappedHttpResponse implements HttpResponse {
+        private final HttpResponse delegate;
+
+        private WrappedHttpResponse(final HttpResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public int getStatus() {
+            return delegate.getStatus();
+        }
+
+        @Override
+        public void setStatus(final int status) {
+            delegate.setStatus(status);
+        }
+
+        @Override
+        public MultivaluedMap<String, Object> getOutputHeaders() {
+            return delegate.getOutputHeaders();
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return delegate.getOutputStream();
+        }
+
+        @Override
+        public void setOutputStream(final OutputStream os) {
+            delegate.setOutputStream(os);
+        }
+
+        @Override
+        public AsyncOutputStream getAsyncOutputStream() throws IOException {
+            return delegate.getAsyncOutputStream();
+        }
+
+        @Override
+        public void addNewCookie(final NewCookie cookie) {
+            delegate.addNewCookie(cookie);
+        }
+
+        @Override
+        public void sendError(final int status) throws IOException {
+            delegate.sendError(status);
+        }
+
+        @Override
+        public void sendError(final int status, final String message) throws IOException {
+            delegate.sendError(status, message);
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return delegate.isCommitted();
+        }
+
+        @Override
+        public void reset() {
+            delegate.reset();
+        }
+
+        @Override
+        public void close() throws IOException {
+            LogMessages.LOGGER.warnf("Closing HttpResponse %s", delegate);
+            delegate.close();
+        }
+
+        @Override
+        public void flushBuffer() throws IOException {
+            delegate.flushBuffer();
+        }
+
+        @Override
+        public void setSuppressExceptionDuringChunkedTransfer(final boolean suppressExceptionDuringChunkedTransfer) {
+            delegate.setSuppressExceptionDuringChunkedTransfer(suppressExceptionDuringChunkedTransfer);
+        }
+
+        @Override
+        public boolean suppressExceptionDuringChunkedTransfer() {
+            return delegate.suppressExceptionDuringChunkedTransfer();
         }
     }
 }

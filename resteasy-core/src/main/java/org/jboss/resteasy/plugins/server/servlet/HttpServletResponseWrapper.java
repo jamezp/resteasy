@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.NewCookie;
 
 import org.jboss.resteasy.core.ResteasyContext;
 import org.jboss.resteasy.core.ResteasyContext.CloseableContext;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
 import org.jboss.resteasy.spi.AsyncOutputStream;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.HttpResponse;
@@ -341,6 +342,7 @@ public class HttpServletResponseWrapper implements HttpResponse {
 
         @Override
         public void onError(Throwable t) {
+            LogMessages.LOGGER.warnf(t, "onError invoked on %s", this);
             synchronized (this) {
                 asyncListenerCalled = true;
                 AsyncOperation op;
@@ -629,6 +631,7 @@ public class HttpServletResponseWrapper implements HttpResponse {
 
         @Override
         public void close() throws IOException {
+            LogMessages.LOGGER.warnf("WrappedServletOutputStream.close() invoked on %s", this);
             if (usePrivilegedAction) {
                 doPrivileged(delegate::close);
             } else {
