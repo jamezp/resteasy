@@ -265,6 +265,19 @@ public String context(
 }
 ----
 
+[IMPORTANT]
+====
+The Vert.x embedded has moved to its own project which can be found at https://github.com/resteasy/resteasy-vertx.
+The packages have remained the same, but the Maven GAV has changed:
+[source,xml]
+----
+<dependency>
+    <groupId>dev.resteasy.vertx</groupId>
+    <artifactId>resteasy-vertx-embedded-server</artifactId>
+</dependency>
+----
+====
+
 === EmbeddedJaxrsServer
 
 `EmbeddedJaxrsServer` is a deprecated interface provided to enable each embedded container wrapper class to configure, start and stop its container in a standard fashion.
