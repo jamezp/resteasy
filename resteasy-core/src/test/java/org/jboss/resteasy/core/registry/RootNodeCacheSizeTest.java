@@ -11,6 +11,7 @@ import org.jboss.resteasy.core.ResourceMethodInvoker;
 import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.plugins.server.resourcefactory.POJOResourceFactory;
+import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.InjectorFactory;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
@@ -19,9 +20,18 @@ import org.jboss.resteasy.spi.metadata.DefaultResourceMethod;
 import org.jboss.resteasy.spi.metadata.ResourceBuilder;
 import org.jboss.resteasy.spi.metadata.ResourceClass;
 import org.jboss.resteasy.spi.metadata.ResourceMethod;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 public class RootNodeCacheSizeTest {
+
+    @AfterEach
+    @SuppressWarnings("removal")
+    public void cleanup() {
+        // Clean up system properties after each test
+        System.clearProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_ENABLED);
+        System.clearProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_SIZE);
+    }
 
     @Test
     public void testRootNodeCacheSize() throws Exception {
@@ -34,12 +44,80 @@ public class RootNodeCacheSizeTest {
 
         // Default in RootNode is CACHE_SIZE = 2048;
         assertEquals(2, rootNode.cacheSize(),
-                () -> "Cache is expected to be cleared when size exceeded 2048 items");
+                "Cache is expected to be cleared when size exceeded 2048 items");
         for (int i = 0; i < 10; i++) {
             rootNode.match(MockHttpRequest.get("" + i).contentType(MediaType.valueOf("text/html;boundary=from" + i)), 0);
         }
         //MediaType with parameters won't be cached
         assertEquals(2, rootNode.cacheSize(), () -> "Unexpected cache item");
+    }
+
+    @Test
+    @SuppressWarnings("removal")
+    public void testCacheDisabledViaSystemProperty() throws Exception {
+        // Set the deprecated system property to disable cache
+        System.setProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_ENABLED, "false");
+
+        MyRootNode rootNode = new MyRootNode();
+        rootNode.adjustRoot();
+
+        for (int i = 0; i < 10; i++) {
+            rootNode.match(MockHttpRequest.get("" + i).contentType(MediaType.TEXT_PLAIN_TYPE), 0);
+        }
+
+        assertEquals(0, rootNode.cacheSize(),
+                () -> "Cache should be disabled when RESTEASY_MATCH_CACHE_ENABLED is false");
+    }
+
+    @Test
+    public void testCacheDisabledViaCacheSizeZero() throws Exception {
+        // Test that cache can be disabled by setting size to 0
+        System.setProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_SIZE, "0");
+
+        MyRootNode rootNode = new MyRootNode();
+        rootNode.adjustRoot();
+
+        for (int i = 0; i < 10; i++) {
+            rootNode.match(MockHttpRequest.get("" + i).contentType(MediaType.TEXT_PLAIN_TYPE), 0);
+        }
+
+        assertEquals(0, rootNode.cacheSize(),
+                () -> "Cache should be disabled when RESTEASY_MATCH_CACHE_SIZE is 0");
+    }
+
+    @Test
+    public void testCustomCacheSize() throws Exception {
+        // Set custom cache size via system property
+        System.setProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_SIZE, "100");
+
+        MyRootNode rootNode = new MyRootNode();
+        rootNode.adjustRoot();
+
+        // Add 105 items to exceed the custom cache size
+        for (int i = 0; i < 105; i++) {
+            rootNode.match(MockHttpRequest.get("" + i).contentType(MediaType.TEXT_PLAIN_TYPE), 0);
+        }
+
+        // Cache should be cleared when size exceeds 100
+        assertEquals(5, rootNode.cacheSize(),
+                () -> "Cache is expected to be cleared when size exceeded 100 items");
+    }
+
+    @Test
+    @SuppressWarnings("removal")
+    public void testCacheEnabledExplicitly() throws Exception {
+        // Explicitly enable cache (should use default size)
+        System.setProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_ENABLED, "true");
+
+        MyRootNode rootNode = new MyRootNode();
+        rootNode.adjustRoot();
+
+        for (int i = 0; i < 10; i++) {
+            rootNode.match(MockHttpRequest.get("" + i).contentType(MediaType.TEXT_PLAIN_TYPE), 0);
+        }
+
+        assertEquals(10, rootNode.cacheSize(),
+                () -> "Cache should be enabled with default size when explicitly enabled");
     }
 
     public class MyRootNode extends RootNode {

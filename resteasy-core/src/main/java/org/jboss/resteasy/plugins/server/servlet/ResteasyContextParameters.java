@@ -100,6 +100,10 @@ public interface ResteasyContextParameters {
 
     // Added for quarkus.  Initial use switch from warning msg to exception message.
     String RESTEASY_FAIL_FAST_ON_MULTIPLE_RESOURCES_MATCHING = "resteasy.fail.fast.on.multiple.resources.matching";
+    /**
+     * @deprecated use the {@link #RESTEASY_MATCH_CACHE_SIZE} and set to {@code 0} to disable the cache
+     */
+    @Deprecated(forRemoval = true, since = "6.2.15.Final")
     String RESTEASY_MATCH_CACHE_ENABLED = "resteasy.match.cache.enabled";
     String RESTEASY_MATCH_CACHE_SIZE = "resteasy.match.cache.size";
 

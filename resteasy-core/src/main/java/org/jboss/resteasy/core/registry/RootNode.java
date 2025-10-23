@@ -15,6 +15,7 @@ import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.resteasy.specimpl.ResteasyUriInfo;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.ResourceInvoker;
+import org.jboss.resteasy.spi.config.ConfigurationFactory;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -25,11 +26,18 @@ public class RootNode {
     protected int size = 0;
     protected MultivaluedMap<String, MethodExpression> bounded = new MultivaluedHashMap<String, MethodExpression>();
     protected ConcurrentHashMap<MatchCache.Key, MatchCache> cache = new ConcurrentHashMap<>();
-    private static int CACHE_SIZE = 2048;
-    private static boolean CACHE = true;
-    static {
-        CACHE = Boolean.parseBoolean(System.getProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_ENABLED, "true"));
-        CACHE_SIZE = Integer.getInteger(ResteasyContextParameters.RESTEASY_MATCH_CACHE_SIZE, 2048);
+    private final int cacheSize;
+
+    @SuppressWarnings("removal")
+    public RootNode() {
+        final String cacheEnabled = System.getProperty(ResteasyContextParameters.RESTEASY_MATCH_CACHE_ENABLED);
+        if (cacheEnabled == null || !cacheEnabled.equalsIgnoreCase("false")) {
+            this.cacheSize = ConfigurationFactory.getInstance().getConfiguration()
+                    .getOptionalValue(ResteasyContextParameters.RESTEASY_MATCH_CACHE_SIZE, Integer.class)
+                    .orElse(2048);
+        } else {
+            this.cacheSize = 0;
+        }
     }
 
     public int getSize() {
@@ -47,7 +55,7 @@ public class RootNode {
     }
 
     public ResourceInvoker match(HttpRequest request, int start) {
-        if (!CACHE || (request.getHttpHeaders().getMediaType() != null
+        if (cacheSize <= 0 || (request.getHttpHeaders().getMediaType() != null
                 && !request.getHttpHeaders().getMediaType().getParameters().isEmpty())) {
             return root.match(request, start).invoker;
         }
@@ -64,7 +72,7 @@ public class RootNode {
                     && match.invoker instanceof ResourceMethodInvoker) {
                 //System.out.println("*** caching: " + key.method + " " + key.path);
                 match.match = null;
-                if (cache.size() >= CACHE_SIZE) {
+                if (cache.size() >= cacheSize) {
                     cache.clear();
                 }
                 cache.putIfAbsent(key, match);
