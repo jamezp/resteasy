@@ -128,7 +128,7 @@ public class ServerDrivenNegotiation {
      */
     //   private static boolean isBetterOption(BigDecimal bestQuality, Variant best,
     //                                         BigDecimal optionQuality, Variant option)
-    private static boolean isBetterOption(VariantQuality bestQuality, Variant best,
+    private boolean isBetterOption(VariantQuality bestQuality, Variant best,
             VariantQuality optionQuality, Variant option) {
         if (best == null)
             return true;
@@ -197,14 +197,18 @@ public class ServerDrivenNegotiation {
         return getExplicitness(best) < getExplicitness(option);
     }
 
-    private static int getExplicitness(Variant variant) {
+    private int getExplicitness(Variant variant) {
         int explicitness = 0;
         if (variant.getMediaType() != null)
             ++explicitness;
         if (variant.getEncoding() != null)
             ++explicitness;
-        if (variant.getLanguage() != null)
+        if (variant.getLanguage() != null) {
             ++explicitness;
+            if (requestedLanguages != null && requestedLanguages.containsKey(variant.getLanguage())) {
+                ++explicitness;
+            }
+        }
         return explicitness;
     }
 
