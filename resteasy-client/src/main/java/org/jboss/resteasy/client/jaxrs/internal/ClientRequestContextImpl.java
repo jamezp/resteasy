@@ -212,6 +212,12 @@ public class ClientRequestContextImpl implements ClientRequestContext {
         return HeaderHelper.containsHeaderString(invocation.getHeaders().getHeader(name), valueSeparatorRegex, valuePredicate);
     }
 
+    @Override
+    public String getHeaderString(final String name, final String separator) {
+        // TODO (jrp) implement
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * exposes the client invocation for easier integration with other libraries
      *

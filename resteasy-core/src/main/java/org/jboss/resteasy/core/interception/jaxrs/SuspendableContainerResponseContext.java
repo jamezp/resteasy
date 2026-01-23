@@ -35,4 +35,10 @@ public interface SuspendableContainerResponseContext extends ContainerResponseCo
      */
     void resume(Throwable t);
 
+    @Override
+    default String getHeaderString(final String name, final String separator) {
+        // TODO (jrp) implement
+        throw new UnsupportedOperationException();
+    }
+
 }

@@ -152,6 +152,12 @@ public class ResteasyHttpHeaders implements HttpHeaders {
     }
 
     @Override
+    public String getHeaderString(final String name, final String separator) {
+        // TODO (jrp) implement
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean containsHeaderString(final String name, final Predicate<String> valuePredicate) {
         return containsHeaderString(name, ",", valuePredicate);
     }

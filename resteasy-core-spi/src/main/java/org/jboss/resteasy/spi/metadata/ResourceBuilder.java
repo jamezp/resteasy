@@ -291,7 +291,10 @@ public class ResourceBuilder {
                 }
             } else if ((uriParam = findAnnotation(annotations, PathParam.class)) != null) {
                 parameter.paramType = Parameter.ParamType.PATH_PARAM;
-                parameter.paramName = uriParam.value();
+                if (uriParam.value().isBlank()) {
+                } else {
+                    parameter.paramName = uriParam.value();
+                }
             } else if ((uriParam2 = findAnnotation(annotations,
                     org.jboss.resteasy.annotations.jaxrs.PathParam.class)) != null) {
                 parameter.paramType = Parameter.ParamType.PATH_PARAM;

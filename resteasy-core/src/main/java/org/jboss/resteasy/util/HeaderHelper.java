@@ -33,6 +33,7 @@ public class HeaderHelper {
      *
      * @see jakarta.ws.rs.core.HttpHeaders#containsHeaderString(String, String, Predicate)
      */
+    // TODO (jrp) I can likely copy this for the getHeaderString()
     public static boolean containsHeaderString(final String value, final String valueSeparatorRegex,
             final Predicate<String> valuePredicate) {
         if (value == null) {
