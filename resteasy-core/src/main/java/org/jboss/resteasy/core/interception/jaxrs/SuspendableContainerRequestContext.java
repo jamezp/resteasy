@@ -34,4 +34,10 @@ public interface SuspendableContainerRequestContext extends ContainerRequestCont
      * @param t the exception to send back to the client, as mapped by the application.
      */
     void resume(Throwable t);
+
+    @Override
+    default String getHeaderString(final String name, final String separator) {
+        // TODO (jrp) implement
+        throw new UnsupportedOperationException();
+    }
 }

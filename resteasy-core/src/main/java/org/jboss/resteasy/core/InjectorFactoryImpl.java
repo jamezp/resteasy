@@ -206,7 +206,7 @@ public class InjectorFactoryImpl implements InjectorFactory {
             return new CookieParamInjector(type, genericType, injectTarget, defaultName, defaultVal, annotations,
                     providerFactory);
         } else if ((uriParam = findAnnotation(annotations, PathParam.class)) != null) {
-            return new PathParamInjector(type, genericType, injectTarget, uriParam.value(), defaultVal, encode, annotations,
+            return new PathParamInjector(type, genericType, injectTarget, defaultName, defaultVal, encode, annotations,
                     providerFactory);
         } else if (findAnnotation(annotations, org.jboss.resteasy.annotations.jaxrs.PathParam.class) != null) {
             return new PathParamInjector(type, genericType, injectTarget, defaultName, defaultVal, encode, annotations,

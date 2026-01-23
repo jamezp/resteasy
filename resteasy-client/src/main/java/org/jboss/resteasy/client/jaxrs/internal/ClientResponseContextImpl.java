@@ -152,6 +152,12 @@ public class ClientResponseContextImpl implements ClientResponseContext {
         return HeaderHelper.containsHeaderString(getHeaderString(name), valueSeparatorRegex, valuePredicate);
     }
 
+    @Override
+    public String getHeaderString(final String name, final String separator) {
+        // TODO (jrp) implement
+        throw new UnsupportedOperationException();
+    }
+
     // hack for MP exception mapping.  TODO revisit this implementation
     public ClientResponse getClientResponse() {
         return response;

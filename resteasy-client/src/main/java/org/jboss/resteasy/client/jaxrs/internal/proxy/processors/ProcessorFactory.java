@@ -113,7 +113,8 @@ public class ProcessorFactory {
             processor = new CookieParamProcessor(getParamName(defaultParameterName, cookie2.value()), genericType, annotations);
         } else if ((uriParam = FindAnnotation.findAnnotation(annotations,
                 PathParam.class)) != null) {
-            processor = new PathParamProcessor(uriParam.value(), isEncoded, genericType, annotations, configuration);
+            processor = new PathParamProcessor(getParamName(defaultParameterName, uriParam.value()), isEncoded, genericType,
+                    annotations, configuration);
         } else if ((uriParam2 = FindAnnotation.findAnnotation(annotations,
                 org.jboss.resteasy.annotations.jaxrs.PathParam.class)) != null) {
             processor = new PathParamProcessor(getParamName(defaultParameterName, uriParam2.value()), isEncoded, genericType,
