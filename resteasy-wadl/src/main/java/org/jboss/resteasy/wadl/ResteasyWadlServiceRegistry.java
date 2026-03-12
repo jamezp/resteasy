@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.wadl;
 
 import java.lang.reflect.Method;
@@ -10,6 +15,7 @@ import jakarta.ws.rs.Path;
 
 import org.jboss.resteasy.core.ResourceMethodInvoker;
 import org.jboss.resteasy.core.ResourceMethodRegistry;
+import org.jboss.resteasy.spi.Registry;
 import org.jboss.resteasy.spi.ResourceInvoker;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.spi.metadata.ResourceLocator;
@@ -22,7 +28,7 @@ import org.jboss.resteasy.wadl.i18n.Messages;
  */
 public class ResteasyWadlServiceRegistry {
 
-    private ResourceMethodRegistry registry;
+    private Registry registry;
 
     public ResteasyProviderFactory getProviderFactory() {
         return providerFactory;
@@ -42,7 +48,7 @@ public class ResteasyWadlServiceRegistry {
 
     private String functionPrefix;
 
-    public ResteasyWadlServiceRegistry(final ResteasyWadlServiceRegistry parent, final ResourceMethodRegistry registry,
+    public ResteasyWadlServiceRegistry(final ResteasyWadlServiceRegistry parent, final Registry registry,
             final ResteasyProviderFactory providerFactory, final ResourceLocator locator) {
         this.parent = parent;
         this.registry = registry;

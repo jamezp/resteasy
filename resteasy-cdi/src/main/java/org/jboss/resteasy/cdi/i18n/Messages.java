@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.cdi.i18n;
 
 import java.lang.annotation.Annotation;
@@ -11,13 +16,6 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
 
-/**
- *
- * @author <a href="ron.sigal@jboss.com">Ron Sigal</a>
- * @version $Revision: 1.1 $
- *
- *          Copyright Aug 25, 2015
- */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
@@ -107,4 +105,7 @@ public interface Messages {
 
     @Message(id = BASE + 130, value = "Using {0} for lookup of Session Bean {1}.", format = Format.MESSAGE_FORMAT)
     String usingInterfaceForLookup(Type type, Class<?> clazz);
+
+    @Message(id = BASE + 135, value = "Unable to resolve CDI bean for resource class %s.")
+    IllegalStateException unableToResolveBean(String classname);
 }

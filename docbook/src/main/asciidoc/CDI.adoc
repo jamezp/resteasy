@@ -35,6 +35,63 @@ Therefore, you need to explicitly define a scope when using stateless session be
 This requirement is likely to be removed in future releases. 
 ====
 
+=== Constructor Injection
+
+CDI resources support constructor injection without requiring a public no-arg constructor.
+According to the CDI specification, normal scoped beans (such as `@RequestScoped` and `@ApplicationScoped`) require a non-private constructor with no parameters for proxy creation.
+This constructor can be `public`, `protected`, or package-private (default access).
+
+RESTEasy supports combining a non-public no-arg constructor (for CDI proxy creation) with an `@Inject`-annotated constructor for dependency injection.
+This allows you to hide the no-arg constructor since it should only be used internally by CDI for proxy generation.
+
+[source,java]
+----
+@Path("/example")
+@RequestScoped
+public class ExampleResource {
+
+    private final ExampleService service;
+
+    @Inject
+    private UriInfo uriInfo;
+
+    // Package-private no-arg constructor for CDI proxy generation
+    // This constructor is never called directly - only used by CDI for creating the proxy subclass
+    ExampleResource() {
+        this.service = null;
+    }
+
+    // Public constructor with CDI dependency injection
+    // This is the constructor CDI actually uses to create the bean instance
+    @Inject
+    public ExampleResource(ExampleService service) {
+        this.service = service;
+    }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getMessage() {
+        return service.getMessage();
+    }
+}
+----
+
+This pattern provides several benefits:
+
+* **Encapsulation**: The no-arg constructor is hidden (package-private or protected), making it clear that it shouldn't be called directly.
+* **Required dependencies are explicit**: The `@Inject` constructor clearly shows which dependencies are required for the resource to function.
+* **CDI handles all instantiation**: RESTEasy delegates resource creation entirely to CDI, allowing full use of CDI features including interceptors and decorators.
+
+[NOTE]
+====
+For normal scoped beans (`@RequestScoped`, `@ApplicationScoped`, etc.), CDI creates a client proxy that extends your bean class.
+The proxy requires a non-private no-arg constructor to call `super()`.
+The `@Inject` constructor is used by CDI when creating the actual bean instance behind the proxy.
+
+Resources can use `public`, `protected`, or package-private no-arg constructors.
+Using `protected` or package-private constructors follows CDI best practices by hiding implementation details.
+====
+
 === Configuration within WildFly
 
 CDI integration is provided with no additional configuration with WildFly. 

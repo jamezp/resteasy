@@ -19,9 +19,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.wildfly.arquillian.junit.annotations.RequiresModule;
 
 @ExtendWith(ArquillianExtension.class)
 @RunAsClient
+@RequiresModule(value = "org.jboss.resteasy.resteasy-cdi", minVersion = "7.0.2.Final", reason = "This test packages the " +
+        "org.jboss.resteasy.wadl package. The ResteasyWadlServiceRegistry was changed to use the latest Registry API. " +
+        "This means this test will only work if the version is defined in WildFly itself.")
 public class DeploymentTest {
 
     private static ResteasyClient client;
