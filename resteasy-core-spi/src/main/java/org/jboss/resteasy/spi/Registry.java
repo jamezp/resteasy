@@ -1,5 +1,15 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.spi;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.Map;
+
+import org.jboss.resteasy.resteasy_jaxrs.i18n.Messages;
 import org.jboss.resteasy.spi.metadata.ResourceBuilder;
 import org.jboss.resteasy.spi.metadata.ResourceClass;
 
@@ -125,4 +135,53 @@ public interface Registry {
     void addJndiResource(String jndiName, ResourceClass resourceClass, String basePath);
 
     void checkAmbiguousUri();
+
+    /**
+     * Returns a map of all registered resource endpoints.
+     * <p>
+     * This provides a flat view of all URI paths that have been bound to resource invokers, primarily used for
+     * introspection, documentation generation (WADL/OpenAPI), statistics, and validation (checking for ambiguous URIs).
+     * </p>
+     *
+     * @return a map where keys are URI path patterns and values are lists of resource invokers registered for those paths
+     */
+
+    default Map<String, List<ResourceInvoker>> getBounded() {
+        return Map.of();
+    }
+
+    /**
+     * Creates a Registry instance using ServiceLoader to discover implementations.
+     * <p>
+     * Implementations are selected based on {@link jakarta.annotation.Priority} annotation, with lower values being
+     * preferred.
+     * </p>
+     *
+     * @param providerFactory the ResteasyProviderFactory to use for the registry
+     *
+     * @return a Registry instance
+     *
+     * @throws IllegalStateException if no Registry implementations are found or a no-arg constructor or a constructor
+     *                               with a {@link ResteasyProviderFactory} argument cannot be found
+     * @throws RuntimeException      if there is a failure to create the instance
+     */
+    static Registry of(final ResteasyProviderFactory providerFactory) {
+        final PriorityServiceLoader<Registry> loader = PriorityServiceLoader.load(Registry.class, (type) -> {
+            try {
+                return type.getDeclaredConstructor(ResteasyProviderFactory.class).newInstance(providerFactory);
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                throw Messages.MESSAGES.failedToConstructClass(e, type);
+            } catch (NoSuchMethodException ignore) {
+                try {
+                    return type.getDeclaredConstructor().newInstance();
+                } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                    throw Messages.MESSAGES.failedToConstructClass(e, type);
+                } catch (NoSuchMethodException _ignore) {
+                    throw Messages.MESSAGES.unableToFindConstructor(ResteasyProviderFactory.class.getName(),
+                            Registry.class.getName());
+                }
+            }
+        });
+        return loader.first().orElseThrow(() -> Messages.MESSAGES.noImplementationFound(Registry.class.getName()));
+    }
 }

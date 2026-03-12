@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.core;
 
 import java.io.IOException;
@@ -65,7 +70,7 @@ public class SynchronousDispatcher implements Dispatcher {
 
     public SynchronousDispatcher(final ResteasyProviderFactory providerFactory) {
         this.providerFactory = providerFactory;
-        this.registry = new ResourceMethodRegistry(providerFactory);
+        this.registry = Registry.of(providerFactory);
         defaultContextObjects.put(Providers.class, providerFactory);
         defaultContextObjects.put(Registry.class, registry);
         defaultContextObjects.put(Dispatcher.class, this);

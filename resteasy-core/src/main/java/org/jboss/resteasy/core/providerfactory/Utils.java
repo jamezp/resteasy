@@ -1,6 +1,5 @@
 package org.jboss.resteasy.core.providerfactory;
 
-import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -22,7 +21,6 @@ import org.jboss.resteasy.spi.ConstructorInjector;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.HttpResponse;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
-import org.jboss.resteasy.spi.util.PickConstructor;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Utils {
@@ -102,12 +100,12 @@ public final class Utils {
     }
 
     private static <T> ConstructorInjector createConstructorInjector(ResteasyProviderFactory rpf, Class<? extends T> clazz) {
-        Constructor<?> constructor = PickConstructor.pickSingletonConstructor(clazz);
-        if (constructor == null) {
+        ConstructorInjector constructorInjector = rpf.getInjectorFactory().createConstructor(clazz, rpf);
+        if (constructorInjector == null) {
             throw new IllegalArgumentException(
                     Messages.MESSAGES.unableToFindPublicConstructorForProvider(clazz.getName()));
         }
-        return rpf.getInjectorFactory().createConstructor(constructor, rpf);
+        return constructorInjector;
     }
 
     static UriBuilder createUriBuilder() {
