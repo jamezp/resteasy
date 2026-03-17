@@ -15,98 +15,97 @@ import org.jboss.resteasy.security.doseta.DKIMSignature;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
-    int BASE = 13500;
 
-    @Message(id = BASE + 0, value = "Body hashes do not match.")
+    @Message(id = 13500, value = "Body hashes do not match.")
     String bodyHashesDoNotMatch();
 
-    @Message(id = BASE + 5, value = "Certificate nor public key properties set")
+    @Message(id = 13505, value = "Certificate nor public key properties set")
     String certificateNorPublicKeySet();
 
-    @Message(id = BASE + 10, value = "The certificate object was not set.")
+    @Message(id = 13510, value = "The certificate object was not set.")
     String certificateObjectNotSet();
 
-    @Message(id = BASE + 15, value = ">>>> Check DNS: %s")
+    @Message(id = 13515, value = ">>>> Check DNS: %s")
     String checkDNS(String alias);
 
-    @Message(id = BASE + 20, value = "Could not find a message body reader for type: %s")
+    @Message(id = 13520, value = "Could not find a message body reader for type: %s")
     String couldNotFindMessageBodyReader(String className);
 
-    @Message(id = BASE + 25, value = "Could not find PublicKey for DKIMSignature %s")
+    @Message(id = 13525, value = "Could not find PublicKey for DKIMSignature %s")
     String couldNotFindPublicKey(DKIMSignature signature);
 
-    @Message(id = BASE + 30, value = ">>>> DNS found record: %s")
+    @Message(id = 13530, value = ">>>> DNS found record: %s")
     String dnsRecordFound(String record);
 
-    @Message(id = BASE + 35, value = "domain attribute is required in header to find a key.")
+    @Message(id = 13535, value = "domain attribute is required in header to find a key.")
     String domainAttributeIsRequired();
 
-    @Message(id = BASE + 40, value = "Expected value ''{0}'' got ''{1}'' for attribute ''{2}''", format = Format.MESSAGE_FORMAT)
+    @Message(id = 13540, value = "Expected value ''{0}'' got ''{1}'' for attribute ''{2}''", format = Format.MESSAGE_FORMAT)
     String expectedValue(String expectedValue, String value, String attribute);
 
-    @Message(id = BASE + 45, value = "Failed to find public key in DNS %s")
+    @Message(id = 13545, value = "Failed to find public key in DNS %s")
     String failedToFindPublicKey(String alias);
 
-    @Message(id = BASE + 50, value = "Failed to find writer for type: %s")
+    @Message(id = 13550, value = "Failed to find writer for type: %s")
     String failedToFindWriter(String className);
 
-    @Message(id = BASE + 55, value = "Failed to parse body hash (bh)")
+    @Message(id = 13555, value = "Failed to parse body hash (bh)")
     String failedToParseBodyHash();
 
-    @Message(id = BASE + 60, value = "Failed to sign")
+    @Message(id = 13560, value = "Failed to sign")
     String failedToSign();
 
-    @Message(id = BASE + 65, value = "Failed to verify signature.")
+    @Message(id = 13565, value = "Failed to verify signature.")
     String failedToVerifySignature();
 
-    @Message(id = BASE + 70, value = "Failed to verify signatures:")
+    @Message(id = 13570, value = "Failed to verify signatures:")
     String failedToVerifySignatures();
 
-    @Message(id = BASE + 75, value = "Malformed %s header")
+    @Message(id = 13575, value = "Malformed %s header")
     String malformedSignatureHeader(String signature);
 
-    @Message(id = BASE + 80, value = "No key to verify with.")
+    @Message(id = 13580, value = "No key to verify with.")
     String noKeyToVerifyWith();
 
-    @Message(id = BASE + 85, value = "No p entry in text record.")
+    @Message(id = 13585, value = "No p entry in text record.")
     String noPEntry();
 
-    @Message(id = BASE + 90, value = "pem: %s")
+    @Message(id = 13590, value = "pem: %s")
     String pem(String pem);
 
-    @Message(id = BASE + 95, value = "private key is null, cannot sign")
+    @Message(id = 13595, value = "private key is null, cannot sign")
     String privateKeyIsNull();
 
-    @Message(id = BASE + 100, value = "Public key is null.")
+    @Message(id = 13600, value = "Public key is null.")
     String publicKeyIsNull();
 
-    @Message(id = BASE + 105, value = "Signature expired")
+    @Message(id = 13605, value = "Signature expired")
     String signatureExpired();
 
-    @Message(id = BASE + 110, value = "Signature is stale")
+    @Message(id = 13610, value = "Signature is stale")
     String signatureIsStale();
 
-    @Message(id = BASE + 115, value = "There was no body hash (bh) in header")
+    @Message(id = 13615, value = "There was no body hash (bh) in header")
     String thereWasNoBodyHash();
 
-    @Message(id = BASE + 120, value = "There was no %s header")
+    @Message(id = 13620, value = "There was no %s header")
     String thereWasNoSignatureHeader(String signature);
 
-    @Message(id = BASE + 125, value = "Unable to find header {0} {1} to sign header with", format = Format.MESSAGE_FORMAT)
+    @Message(id = 13625, value = "Unable to find header {0} {1} to sign header with", format = Format.MESSAGE_FORMAT)
     String unableToFindHeader(String header, String index);
 
-    @Message(id = BASE + 130, value = "Unable to find key to sign message. Repository returned null. ")
+    @Message(id = 13630, value = "Unable to find key to sign message. Repository returned null. ")
     String unableToFindKey();
 
-    @Message(id = BASE + 135, value = "Unable to find key store in path: %s")
+    @Message(id = 13635, value = "Unable to find key store in path: %s")
     String unableToFindKeyStore(String path);
 
-    @Message(id = BASE + 140, value = "Unable to locate a private key to sign message, repository is null.")
+    @Message(id = 13640, value = "Unable to locate a private key to sign message, repository is null.")
     String unableToLocatePrivateKey();
 
-    @Message(id = BASE + 145, value = "Unsupported algorithm %s")
+    @Message(id = 13645, value = "Unsupported algorithm %s")
     String unsupportedAlgorithm(String algorithm);
 
-    @Message(id = BASE + 150, value = "Unsupported key type: %s")
+    @Message(id = 13650, value = "Unsupported key type: %s")
     String unsupportedKeyType(String type);
 }

@@ -15,44 +15,40 @@ import org.jboss.resteasy.core.ResourceMethodInvoker;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
-    int BASE = 11500;
 
-    @Message(id = BASE
-            + 0, value = "Impossible to generate JSAPI for subresource returned by method {0}.{1} since return type is not a static JAXRS resource type", format = Format.MESSAGE_FORMAT)
+    @Message(id = 11500, value = "Impossible to generate JSAPI for subresource returned by method {0}.{1} since return type is not a static JAXRS resource type", format = Format.MESSAGE_FORMAT)
     String impossibleToGenerateJsapi(String className, String methodName);
 
-    @Message(id = BASE + 5, value = " Invoker: %s")
+    @Message(id = 11505, value = " Invoker: %s")
     String invoker(ResourceMethodInvoker invoker);
 
-    @Message(id = BASE + 10, value = "JSAPIServlet loaded")
+    @Message(id = 11510, value = "JSAPIServlet loaded")
     String jsapiServletLoaded();
 
-    @Message(id = BASE + 15, value = "Loading JSAPI Servlet")
+    @Message(id = 11515, value = "Loading JSAPI Servlet")
     String loadingJSAPIServlet();
 
-    @Message(id = BASE
-            + 20, value = "Overriding @Consumes annotation in favour of application/x-www-form-urlencoded due to the presence of @FormParam")
+    @Message(id = 11520, value = "Overriding @Consumes annotation in favour of application/x-www-form-urlencoded due to the presence of @FormParam")
     String overridingConsumes();
 
-    @Message(id = BASE + 25, value = "Path: %s")
+    @Message(id = 11525, value = "Path: %s")
     String path(String uri);
 
-    @Message(id = BASE + 30, value = "Query %s")
+    @Message(id = 11530, value = "Query %s")
     String query(String query);
 
-    @Message(id = BASE + 35, value = "REST.apiURL = '%s';")
+    @Message(id = 11535, value = "REST.apiURL = '%s';")
     String restApiUrl(String uri);
 
-    @Message(id = BASE + 45, value = "Serving %s")
+    @Message(id = 11545, value = "Serving %s")
     String serving(String pathinfo);
 
-    @Message(id = BASE + 50, value = "// start REST API")
+    @Message(id = 11550, value = "// start REST API")
     String startJaxRsApi();
 
-    @Message(id = BASE + 55, value = "// start RESTEasy client API")
+    @Message(id = 11555, value = "// start RESTEasy client API")
     String startResteasyClient();
 
-    @Message(id = BASE
-            + 60, value = "There are no Resteasy deployments initialized yet to scan from.  Either set the load-on-startup on each Resteasy servlet, or, if in an EE environment like JBoss or Wildfly, you'll have to do an invocation on each of your REST services to get the servlet loaded.")
+    @Message(id = 11560, value = "There are no Resteasy deployments initialized yet to scan from.  Either set the load-on-startup on each Resteasy servlet, or, if in an EE environment like JBoss or Wildfly, you'll have to do an invocation on each of your REST services to get the servlet loaded.")
     String thereAreNoResteasyDeployments();
 }

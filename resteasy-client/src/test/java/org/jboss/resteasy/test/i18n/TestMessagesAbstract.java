@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
  */
 public abstract class TestMessagesAbstract extends TestMessagesParent {
     private static final Logger LOG = Logger.getLogger(TestMessagesAbstract.class);
-    protected String BASE = String.format("00%4s", Messages.BASE).substring(0, 4);
+    protected String BASE = "0045";
     protected TypeVariable<?> var;
     protected MediaType mediaType = new MediaType("xx", "yy", "zz");
 

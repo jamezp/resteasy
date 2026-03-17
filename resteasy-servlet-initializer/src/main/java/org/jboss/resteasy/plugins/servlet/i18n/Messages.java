@@ -13,8 +13,7 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
-    int BASE = 12500;
 
-    @Message(id = BASE + 0, value = "Default Application class not implemented yet")
+    @Message(id = 12500, value = "Default Application class not implemented yet")
     String defaultApplicationNotImplemented();
 }

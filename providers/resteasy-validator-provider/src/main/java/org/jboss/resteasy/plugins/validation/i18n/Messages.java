@@ -15,44 +15,43 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
-    int BASE = 8500;
 
-    //   @Message(id = BASE + 0, value = "ResteasyViolationException has invalid format: %s")
+    //   @Message(id = 8500, value = "ResteasyViolationException has invalid format: %s")
     //   String exceptionHasInvalidFormat(String line);
 
-    @Message(id = BASE + 05, value = "Expect two non-null methods")
+    @Message(id = 8505, value = "Expect two non-null methods")
     String expectTwoNonNullMethods();
 
-    @Message(id = BASE + 10, value = "ResteasyCdiExtension is on the classpath.")
+    @Message(id = 8510, value = "ResteasyCdiExtension is on the classpath.")
     String resteasyCdiExtensionOnClasspath();
 
-    @Message(id = BASE + 15, value = "ResteasyCdiExtension is not on the classpath. Assuming CDI is not active")
+    @Message(id = 8515, value = "ResteasyCdiExtension is not on the classpath. Assuming CDI is not active")
     String resteasyCdiExtensionNotOnClasspath();
 
-    @Message(id = BASE + 20, value = "Unable to load Validation support")
+    @Message(id = 8520, value = "Unable to load Validation support")
     String unableToLoadValidationSupport();
 
-    //   @Message(id = BASE + 25, value = "Unable to parse ResteasyViolationException")
+    //   @Message(id = 8525, value = "Unable to parse ResteasyViolationException")
     //   String unableToParseException();
 
-    //   @Message(id = BASE + 30, value = "unexpected path node type: %s")
+    //   @Message(id = 8530, value = "unexpected path node type: %s")
     //   String unexpectedPathNode(ElementKind kind);
 
-    //   @Message(id = BASE + 35, value = "unexpected path node type in method violation: %s")
+    //   @Message(id = 8535, value = "unexpected path node type in method violation: %s")
     //   String unexpectedPathNodeViolation(ElementKind kind);
 
-    //   @Message(id = BASE + 40, value = "unexpected violation type: %s")
+    //   @Message(id = 8540, value = "unexpected violation type: %s")
     //   String unexpectedViolationType(ConstraintType.Type type);
 
-    //   @Message(id = BASE + 45, value = "unknown object passed as constraint violation: %s")
+    //   @Message(id = 8545, value = "unknown object passed as constraint violation: %s")
     //   String unknownObjectPassedAsConstraintViolation(Object o);
 
-    @Message(id = BASE + 50, value = "Unable to find CDI supporting ValidatorFactory. Using default ValidatorFactory")
+    @Message(id = 8550, value = "Unable to find CDI supporting ValidatorFactory. Using default ValidatorFactory")
     String usingValidatorFactoryDoesNotSupportCDI();
 
-    @Message(id = BASE + 55, value = "Using CDI supporting %s")
+    @Message(id = 8555, value = "Using CDI supporting %s")
     String usingValidatorFactorySupportsCDI(ValidatorFactory factory);
 
-    @Message(id = BASE + 60, value = "@ValidateOnExecution found on multiple overridden methods")
+    @Message(id = 8560, value = "@ValidateOnExecution found on multiple overridden methods")
     String validateOnExceptionOnMultipleMethod();
 }
