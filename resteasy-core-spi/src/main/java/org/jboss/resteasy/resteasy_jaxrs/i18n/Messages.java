@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.resteasy_jaxrs.i18n;
 
 import java.io.IOException;
@@ -9,7 +14,6 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
 import jakarta.validation.ElementKind;
@@ -885,7 +889,7 @@ public interface Messages {
     UncheckedIOException failedToScanResources(@Cause IOException cause);
 
     @Message(id = BASE + 2074, value = "No implementation of %s was found.")
-    CompletionException noImplementationFound(String name);
+    IllegalStateException noImplementationFound(String name);
 
     @Message(id = BASE + 2075, value = "Could no load default SSL context")
     IllegalStateException couldNotLoadSslContext(@Cause Throwable cause);
@@ -908,4 +912,7 @@ public interface Messages {
 
     @Message(id = BASE + 2095, value = "The HTTP session has been invalidated.")
     IOException invalidSession();
+
+    @Message(id = BASE + 2096, value = "Unable to find constructor with arguments [%s] or a no-arg constructor for type %s")
+    IllegalStateException unableToFindConstructor(String args, String className);
 }

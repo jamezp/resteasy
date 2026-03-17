@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.core;
 
 import java.lang.reflect.Method;
@@ -6,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jakarta.annotation.Priority;
 import jakarta.ws.rs.Path;
 
 import org.jboss.resteasy.core.registry.RootClassNode;
@@ -39,6 +45,7 @@ import org.jboss.resteasy.util.IsHttpMethod;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
+@Priority(1000)
 @SuppressWarnings("rawtypes")
 public class ResourceMethodRegistry implements Registry {
     public static final String REGISTRY_MATCHING_EXCEPTION = "registry.matching.exception";
@@ -64,7 +71,7 @@ public class ResourceMethodRegistry implements Registry {
         this.widerMatching = widerMatching;
     }
 
-    public void addPerRequestResource(Class clazz, String basePath) {
+    public void addPerRequestResource(Class<?> clazz, String basePath) {
         addResourceFactory(new POJOResourceFactory(resourceBuilder, clazz), basePath);
 
     }
@@ -74,7 +81,7 @@ public class ResourceMethodRegistry implements Registry {
      *
      * @param clazz class
      */
-    public void addPerRequestResource(Class clazz) {
+    public void addPerRequestResource(Class<?> clazz) {
         addResourceFactory(new POJOResourceFactory(resourceBuilder, clazz));
     }
 
@@ -383,6 +390,7 @@ public class ResourceMethodRegistry implements Registry {
         }
     }
 
+    @Override
     public Map<String, List<ResourceInvoker>> getBounded() {
         if (widerMatching)
             return rootNode.getBounded();

@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.cdi;
 
 import java.lang.annotation.Annotation;
@@ -145,6 +150,20 @@ public class Utils {
         return false;
     }
 
+    static boolean isNormalScope(final AnnotatedType<?> annotatedType, final BeanManager manager) {
+        for (Annotation annotation : annotatedType.getAnnotations()) {
+            if (manager.isScope(annotation.annotationType())) {
+                return manager.isNormalScope(annotation.annotationType());
+            }
+            if (manager.isStereotype(annotation.annotationType())) {
+                if (isNormalScope(annotation.annotationType(), manager)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Find out if a given class is explicitly bound to a scope.
      *
@@ -161,6 +180,20 @@ public class Utils {
             }
             if (manager.isStereotype(annotation.annotationType())) {
                 if (isScopeDefined(annotation.annotationType(), manager)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean isNormalScope(final Class<?> clazz, final BeanManager manager) {
+        for (Annotation annotation : clazz.getAnnotations()) {
+            if (manager.isScope(annotation.annotationType())) {
+                return manager.isNormalScope(annotation.annotationType());
+            }
+            if (manager.isStereotype(annotation.annotationType())) {
+                if (isNormalScope(annotation.annotationType(), manager)) {
                     return true;
                 }
             }

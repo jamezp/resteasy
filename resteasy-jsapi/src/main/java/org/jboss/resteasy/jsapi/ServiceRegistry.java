@@ -1,3 +1,8 @@
+/*
+ * Copyright The RESTEasy Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.jboss.resteasy.jsapi;
 
 import java.lang.reflect.Method;
@@ -8,9 +13,9 @@ import java.util.Map.Entry;
 import org.jboss.logging.Logger.Level;
 import org.jboss.resteasy.core.ResourceLocatorInvoker;
 import org.jboss.resteasy.core.ResourceMethodInvoker;
-import org.jboss.resteasy.core.ResourceMethodRegistry;
 import org.jboss.resteasy.jsapi.i18n.LogMessages;
 import org.jboss.resteasy.jsapi.i18n.Messages;
+import org.jboss.resteasy.spi.Registry;
 import org.jboss.resteasy.spi.ResourceInvoker;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.spi.metadata.ResourceLocator;
@@ -22,7 +27,7 @@ import org.jboss.resteasy.util.GetRestful;
 public class ServiceRegistry {
     private static final long serialVersionUID = -1985015444704126795L;
 
-    private ResourceMethodRegistry registry;
+    private Registry registry;
 
     private ResteasyProviderFactory providerFactory;
 
@@ -42,7 +47,7 @@ public class ServiceRegistry {
         return parent;
     }
 
-    public ServiceRegistry(final ServiceRegistry parent, final ResourceMethodRegistry registry,
+    public ServiceRegistry(final ServiceRegistry parent, final Registry registry,
             final ResteasyProviderFactory providerFactory, final ResourceLocatorInvoker invoker) throws Exception {
         this.parent = parent;
         this.registry = registry;
@@ -89,7 +94,7 @@ public class ServiceRegistry {
                             // skip this
                             continue;
                         }
-                        ResourceMethodRegistry locatorRegistry = new ResourceMethodRegistry(providerFactory);
+                        Registry locatorRegistry = Registry.of(providerFactory);
                         locatorRegistry.addResourceFactory(null, null, locatorResourceType);
                         locators.add(new ServiceRegistry(this, locatorRegistry, providerFactory, locator));
                     }
