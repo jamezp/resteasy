@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
  */
 public abstract class TestMessagesAbstract extends TestMessagesParent {
     private static final Logger LOG = Logger.getLogger(TestMessagesAbstract.class);
-    protected static final String BASE = String.format("0%5s", Messages.BASE).substring(0, 4);
+    protected static final String BASE = "0115";
     protected static ResourceMethodInvoker testMethod;
 
     static {
