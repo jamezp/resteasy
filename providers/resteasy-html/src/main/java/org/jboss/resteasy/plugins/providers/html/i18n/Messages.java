@@ -15,8 +15,7 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
-    int BASE = 6000;
 
-    @Message(id = BASE + 0, value = "No dispatcher found for path '%s'")
+    @Message(id = 6000, value = "No dispatcher found for path '%s'")
     String noDispatcherFound(String path);
 }

@@ -74,7 +74,7 @@ public abstract class TestMessagesAbstract extends TestMessagesParent {
 
     protected static final Set beanSet = new HashSet<Bean<String>>();
 
-    protected static final String BASE = String.format("0%5s", Messages.BASE).substring(0, 4);
+    protected static final String BASE = "0105";
     protected static final String BASE3 = BASE.substring(0, 3);
 
     static {

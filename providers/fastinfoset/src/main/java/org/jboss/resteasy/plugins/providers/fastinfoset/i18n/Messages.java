@@ -15,8 +15,7 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
-    int BASE = 5500;
 
-    @Message(id = BASE + 0, value = "Expecting a StreamSource")
+    @Message(id = 5500, value = "Expecting a StreamSource")
     String expectingStreamSource();
 }

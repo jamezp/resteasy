@@ -17,17 +17,16 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
-    int BASE = 5000;
 
-    @Message(id = BASE + 0, value = "This constructor must be called in the context of a request")
+    @Message(id = 5000, value = "This constructor must be called in the context of a request")
     String consructorMustBeCalled();
 
-    @Message(id = BASE + 5, value = "Unable to find JAXBContext for media type: %s")
+    @Message(id = 5005, value = "Unable to find JAXBContext for media type: %s")
     String unableToFindJAXBContext(MediaType mediaType);
 
-    @Message(id = BASE + 10, value = "Unable to marshal: %s")
+    @Message(id = 5010, value = "Unable to marshal: %s")
     String unableToMarshal(MediaType mediaType);
 
-    @Message(id = BASE + 15, value = "Unable to unmarshal: %s")
+    @Message(id = 5015, value = "Unable to unmarshal: %s")
     String unableToUnmarshal(MediaType mediaType);
 }

@@ -23,19 +23,19 @@ public interface LogMessages extends BasicLogger {
             LogMessages.class.getPackage().getName());
 
     @LogMessage(level = Level.DEBUG)
-    @Message(id = Messages.BASE + 171, value = "Ignoring exception thrown within InvocationCallback")
+    @Message(id = 4671, value = "Ignoring exception thrown within InvocationCallback")
     void exceptionIgnored(@Cause Throwable ex);
 
     @LogMessage(level = Level.DEBUG)
-    @Message(id = Messages.BASE + 172, value = "Client send processing failure.")
+    @Message(id = 4672, value = "Client send processing failure.")
     void clientSendProcessingFailure(@Cause Throwable cause);
 
     @LogMessage(level = Level.WARN)
-    @Message(id = Messages.BASE + 187, value = "Closing a %s instance for you. Please close clients yourself.")
+    @Message(id = 4687, value = "Closing a %s instance for you. Please close clients yourself.")
     void closingForYou(Class<?> clazz);
 
     @LogMessage(level = Level.WARN)
-    @Message(id = Messages.BASE + 300, value = "Could not determine the protocol from %s. Defaulting to %s.")
+    @Message(id = 4800, value = "Could not determine the protocol from %s. Defaulting to %s.")
     void invalidProtocol(Object found, String defaultValue);
 
 }
