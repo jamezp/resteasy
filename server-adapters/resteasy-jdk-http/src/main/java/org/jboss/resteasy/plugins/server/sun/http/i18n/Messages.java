@@ -13,17 +13,16 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
     Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
-    int BASE = 17500;
 
-    @Message(id = BASE + 0, value = "[Embedded Container Start]")
+    @Message(id = 17500, value = "[Embedded Container Start]")
     String embeddedContainerStart();
 
-    @Message(id = BASE + 5, value = "[Embedded Container Stop]")
+    @Message(id = 17505, value = "[Embedded Container Stop]")
     String embeddedContainerStop();
 
-    @Message(id = BASE + 10, value = "Error parsing request")
+    @Message(id = 17510, value = "Error parsing request")
     String errorParsingRequest();
 
-    @Message(id = BASE + 15, value = "WTF!")
+    @Message(id = 17515, value = "WTF!")
     String wtf();
 }
