@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.annotation.Annotation;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -318,7 +320,12 @@ public class SseEventOutputImpl extends GenericType<OutboundSseEvent> implements
                 responseCode = HttpResponseCodes.SC_OK;
             } else {
                 // True SSE endpoints return configurable status (default 204)
-                responseCode = Options.SSE_CLOSED_RESPONSE_CODE.getValue();
+                if (System.getSecurityManager() == null) {
+                    responseCode = Options.SSE_CLOSED_RESPONSE_CODE.getValue();
+                } else {
+                    responseCode = AccessController
+                            .doPrivileged((PrivilegedAction<Integer>) Options.SSE_CLOSED_RESPONSE_CODE::getValue);
+                }
             }
 
         } else //set back to client 200 OK to implies the SseEventOutput is ready
