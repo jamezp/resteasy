@@ -51,13 +51,27 @@ public abstract class AbstractPatchMethodFilter implements ContainerRequestFilte
             if (context == null) {
                 disabled = Boolean.getBoolean(ResteasyContextParameters.RESTEASY_PATCH_FILTER_DISABLED);
                 if (!disabled) {
-                    legacyFilter = Boolean.getBoolean(ResteasyContextParameters.RESTEASY_PATCH_FILTER_LEGACY);
+                    String legacyValue = System.getProperty(ResteasyContextParameters.RESTEASY_PATCH_FILTER_LEGACY);
+                    if (legacyValue != null) {
+                        LogMessages.LOGGER.patchFilterLegacyDeprecated(ResteasyContextParameters.RESTEASY_PATCH_FILTER_LEGACY,
+                                ResteasyContextParameters.RESTEASY_PREFER_JACKSON_OVER_JSONB);
+                        legacyFilter = Boolean.parseBoolean(legacyValue);
+                    } else {
+                        legacyFilter = Boolean.getBoolean(ResteasyContextParameters.RESTEASY_PREFER_JACKSON_OVER_JSONB);
+                    }
                 }
             } else {
                 disabled = Boolean.parseBoolean(context.getParameter(ResteasyContextParameters.RESTEASY_PATCH_FILTER_DISABLED));
                 if (!disabled) {
-                    legacyFilter = Boolean
-                            .parseBoolean(context.getParameter(ResteasyContextParameters.RESTEASY_PATCH_FILTER_LEGACY));
+                    String legacyValue = context.getParameter(ResteasyContextParameters.RESTEASY_PATCH_FILTER_LEGACY);
+                    if (legacyValue != null) {
+                        LogMessages.LOGGER.patchFilterLegacyDeprecated(ResteasyContextParameters.RESTEASY_PATCH_FILTER_LEGACY,
+                                ResteasyContextParameters.RESTEASY_PREFER_JACKSON_OVER_JSONB);
+                        legacyFilter = Boolean.parseBoolean(legacyValue);
+                    } else {
+                        legacyFilter = Boolean.parseBoolean(
+                                context.getParameter(ResteasyContextParameters.RESTEASY_PREFER_JACKSON_OVER_JSONB));
+                    }
                 }
             }
             if (disabled) {
