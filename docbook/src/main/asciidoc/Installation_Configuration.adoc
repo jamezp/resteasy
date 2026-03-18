@@ -796,8 +796,9 @@ RESTEasy can receive the following configuration options from any ConfigSource's
 
 | resteasy.patchfilter.legacy
 | true
-| Setting this value to false, the jsonp provider will be activated to provide PatchFilter for Json patch or Json Merge
-  patch functionalities. The default is true; the Jackson provider will be used.
+| *Deprecated*: Use `resteasy.preferJacksonOverJsonB` instead. When set to `false`, the Jakarta JSON Processing
+  provider is used for PATCH filter processing. When set to `true`, the Jackson provider is used. This parameter will
+  be removed in a future release.
 
 |resteasy.original.webapplicationexception.behavior
 | false

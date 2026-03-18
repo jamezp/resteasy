@@ -15,6 +15,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 
 /**
  *
@@ -201,6 +202,11 @@ public interface LogMessages extends BasicLogger {
     @LogMessage(level = Level.WARN)
     @Message(id = 2197, value = "The previous response status was {0} {1}. The status should be changed before the entity is set.", format = Format.MESSAGE_FORMAT)
     void statusNotSet(int statusCode, String reasonPhrase);
+
+    @LogMessage(level = Level.WARN)
+    @Once
+    @Message(id = 2198, value = "Context parameter '%s' is deprecated and will be removed in a future release. Use '%s' to control which JSON provider is used for PATCH filter processing.")
+    void patchFilterLegacyDeprecated(String legacyProperty, String jacksonProperty);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                                  INFO                                                 //
