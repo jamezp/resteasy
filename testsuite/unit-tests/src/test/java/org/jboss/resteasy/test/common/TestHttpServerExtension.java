@@ -20,13 +20,13 @@
 package org.jboss.resteasy.test.common;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import org.junit.jupiter.api.extension.AfterAllCallback;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.UriBuilder;
+
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
@@ -40,52 +40,51 @@ import org.junit.platform.commons.util.ReflectionUtils;
 /**
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
-public class FakeHttpServerExtension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback, ParameterResolver {
-    private final Lock lock = new ReentrantLock();
-    private final List<FakeHttpServer> servers = new ArrayList<>();
+class TestHttpServerExtension implements BeforeAllCallback, BeforeEachCallback, ParameterResolver {
+
+    private static final String SERVER_KEY = "test.server";
+    private static final String CLIENT_KEY = "test.client";
+    private static final ExtensionContext.Namespace SERVER_NAMESPACE = ExtensionContext.Namespace.create("Test.Server");
 
     @Override
     public void beforeAll(final ExtensionContext context) {
-        injectFields(context, null, createServer(), ReflectionUtils::isStatic);
+        injectFields(context, null, getOrCreateServer(context), ReflectionUtils::isStatic);
     }
 
     @Override
     public void beforeEach(final ExtensionContext context) {
-        final FakeHttpServer httpServer = createServer();
         context.getRequiredTestInstances().getAllInstances() //
-                .forEach(instance -> injectFields(context, instance, httpServer, ReflectionUtils::isNotFinal));
-    }
-
-    @Override
-    public void afterAll(final ExtensionContext extensionContext) {
-        try {
-            lock.lock();
-            servers.forEach(FakeHttpServer::stop);
-            servers.clear();
-        } finally {
-            lock.unlock();
-        }
+                .forEach(instance -> injectFields(context, instance, getOrCreateServer(context), ReflectionUtils::isNotFinal));
     }
 
     @Override
     public boolean supportsParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext)
             throws ParameterResolutionException {
-        return parameterContext.isAnnotated(TestServer.class);
+        return (parameterContext.isAnnotated(RequestTarget.class)
+                && WebTarget.class.isAssignableFrom(parameterContext.getParameter().getType()));
     }
 
     @Override
     public Object resolveParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext)
             throws ParameterResolutionException {
-        return createServer();
+        if (parameterContext.isAnnotated(RequestTarget.class)
+                && WebTarget.class.isAssignableFrom(parameterContext.getParameter().getType())) {
+            final TestHttpServer testServer = getOrCreateServer(extensionContext);
+            final Client client = getOrCreateClient(extensionContext);
+            final UriBuilder uriBuilder = UriBuilder.fromUri(testServer.baseUri())
+                    .uri(parameterContext.getParameter().getAnnotation(RequestTarget.class).value());
+            return client.target(uriBuilder.build());
+        }
+        return null;
     }
 
-    private void injectFields(final ExtensionContext context, final Object instance, final FakeHttpServer testServer,
+    private void injectFields(final ExtensionContext context, final Object instance, final TestHttpServer testServer,
             final Predicate<Field> filter) {
-        AnnotationUtils.findAnnotatedFields(context.getRequiredTestClass(), TestServer.class, filter)
+        AnnotationUtils.findAnnotatedFields(context.getRequiredTestClass(), RequiresHttpServer.class, filter)
                 .forEach(field -> {
                     if (ReflectionUtils.isFinal(field)) {
                         throw new ExtensionConfigurationException(
-                                String.format("@TestServer field %s.%s cannot be declared final.",
+                                String.format("@RequiresHttpServer field %s.%s cannot be declared final.",
                                         context.getTestClass().map(Class::getName).orElse(""), field));
                     }
                     try {
@@ -98,14 +97,18 @@ public class FakeHttpServerExtension implements BeforeAllCallback, BeforeEachCal
                 });
     }
 
-    private FakeHttpServer createServer() {
-        final FakeHttpServer result = new FakeHttpServer();
-        try {
-            lock.lock();
-            servers.add(result);
-            return result;
-        } finally {
-            lock.unlock();
-        }
+    @SuppressWarnings("resource")
+    private static TestHttpServer getOrCreateServer(final ExtensionContext context) {
+        final ExtensionContext.Store store = getGlobalStore(context);
+        return store.getOrComputeIfAbsent(SERVER_KEY, key -> new TestHttpServer().start(), TestHttpServer.class);
+    }
+
+    private static Client getOrCreateClient(final ExtensionContext context) {
+        final ExtensionContext.Store store = getGlobalStore(context);
+        return store.getOrComputeIfAbsent(CLIENT_KEY, key -> ClientBuilder.newClient(), Client.class);
+    }
+
+    private static ExtensionContext.Store getGlobalStore(final ExtensionContext context) {
+        return context.getRoot().getStore(ExtensionContext.StoreScope.LAUNCHER_SESSION, SERVER_NAMESPACE);
     }
 }
