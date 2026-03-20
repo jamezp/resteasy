@@ -10,8 +10,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.ClientRequestContext;
 import jakarta.ws.rs.client.ClientRequestFilter;
 import jakarta.ws.rs.client.ClientResponseContext;
@@ -37,8 +35,8 @@ import org.jboss.resteasy.core.interception.jaxrs.ContainerResponseFilterRegistr
 import org.jboss.resteasy.core.interception.jaxrs.JaxrsInterceptorRegistryImpl;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.spi.interception.JaxrsInterceptorRegistry;
-import org.jboss.resteasy.test.common.FakeHttpServer;
-import org.jboss.resteasy.test.common.TestServer;
+import org.jboss.resteasy.test.common.RequestTarget;
+import org.jboss.resteasy.test.common.RequiresHttpServer;
 import org.jboss.resteasy.test.interception.resource.PriorityClientRequestFilter1;
 import org.jboss.resteasy.test.interception.resource.PriorityClientRequestFilter2;
 import org.jboss.resteasy.test.interception.resource.PriorityClientRequestFilter3;
@@ -58,12 +56,10 @@ import org.junit.jupiter.api.Test;
  *                    Priority annotation.
  * @tpSince RESTEasy 3.0.16
  */
+@RequiresHttpServer
 public class PriorityTest {
 
     private static final String ERROR_MESSAGE = "RESTEasy uses filter in wrong older";
-
-    @TestServer
-    public FakeHttpServer fakeHttpServer;
 
     /**
      * @tpTestDetails Test for classes implements ContainerResponseFilter.
@@ -127,285 +123,221 @@ public class PriorityTest {
     }
 
     @Test
-    public void testClientRequestFilterPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
-
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new ClientRequestFilter() {
-                @Override
-                public void filter(ClientRequestContext requestContext) throws IOException {
-                    result.append("K");
-                }
-            }, 1);
-            webTarget.register(new ClientRequestFilter() {
-                @Override
-                public void filter(ClientRequestContext requestContext) throws IOException {
-                    result.append("O");
-                }
-            }, 0);
-            webTarget.request().get().close();
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+    public void testClientRequestFilterPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new ClientRequestFilter() {
+            @Override
+            public void filter(ClientRequestContext requestContext) throws IOException {
+                result.append("K");
+            }
+        }, 1);
+        webTarget.register(new ClientRequestFilter() {
+            @Override
+            public void filter(ClientRequestContext requestContext) throws IOException {
+                result.append("O");
+            }
+        }, 0);
+        webTarget.request().get().close();
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testClientResponseFilterPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
-
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new ClientResponseFilter() {
-                @Override
-                public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext)
-                        throws IOException {
-                    result.append("O");
-                }
-            }, 1);
-            webTarget.register(new ClientResponseFilter() {
-                @Override
-                public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext)
-                        throws IOException {
-                    result.append("K");
-                }
-            }, 0);
-            webTarget.request().get().close();
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+    public void testClientResponseFilterPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new ClientResponseFilter() {
+            @Override
+            public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext)
+                    throws IOException {
+                result.append("O");
+            }
+        }, 1);
+        webTarget.register(new ClientResponseFilter() {
+            @Override
+            public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext)
+                    throws IOException {
+                result.append("K");
+            }
+        }, 0);
+        webTarget.request().get().close();
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testReaderInterceptorPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
+    public void testReaderInterceptorPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        webTarget.register((ClientResponseFilter) (containerRequestContext, containerResponseContext) -> {
+            containerResponseContext.getHeaders().putSingle(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
+            containerResponseContext.setEntityStream(new ByteArrayInputStream("hello".getBytes()));
+        });
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new ReaderInterceptor() {
+            @Override
+            public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
+                result.append("K");
+                return context.proceed();
+            }
+        }, 1);
+        webTarget.register(new ReaderInterceptor() {
 
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            webTarget.register((ClientResponseFilter) (containerRequestContext, containerResponseContext) -> {
-                containerResponseContext.getHeaders().putSingle(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
-                containerResponseContext.setEntityStream(new ByteArrayInputStream("hello".getBytes()));
-            });
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new ReaderInterceptor() {
-                @Override
-                public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
-                    result.append("K");
-                    return context.proceed();
-                }
-            }, 1);
-            webTarget.register(new ReaderInterceptor() {
-
-                @Override
-                public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
-                    result.append("O");
-                    return context.proceed();
-                }
-            }, 0);
-            webTarget.request().get().readEntity(String.class);
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+            @Override
+            public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
+                result.append("O");
+                return context.proceed();
+            }
+        }, 0);
+        webTarget.request().get().readEntity(String.class);
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testWriterPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
-
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new WriterInterceptor() {
-                @Override
-                public void aroundWriteTo(WriterInterceptorContext context) throws IOException, WebApplicationException {
-                    result.append("K");
-                    context.proceed();
-                }
-            }, 1);
-            webTarget.register(new WriterInterceptor() {
-                @Override
-                public void aroundWriteTo(WriterInterceptorContext context) throws IOException, WebApplicationException {
-                    result.append("O");
-                    context.proceed();
-                }
-            }, 0);
-            webTarget.request().post(Entity.text("Hello")).close();
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+    public void testWriterPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new WriterInterceptor() {
+            @Override
+            public void aroundWriteTo(WriterInterceptorContext context) throws IOException, WebApplicationException {
+                result.append("K");
+                context.proceed();
+            }
+        }, 1);
+        webTarget.register(new WriterInterceptor() {
+            @Override
+            public void aroundWriteTo(WriterInterceptorContext context) throws IOException, WebApplicationException {
+                result.append("O");
+                context.proceed();
+            }
+        }, 0);
+        webTarget.request().post(Entity.text("Hello")).close();
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testMessageBodyReaderPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
+    public void testMessageBodyReaderPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        webTarget.register((ClientResponseFilter) (containerRequestContext, containerResponseContext) -> {
+            containerResponseContext.getHeaders().putSingle(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
+            containerResponseContext.setEntityStream(new ByteArrayInputStream("hello".getBytes()));
+        });
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new MessageBodyReader<String>() {
+            @Override
+            public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+                result.append("K");
+                return false;
+            }
 
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            webTarget.register((ClientResponseFilter) (containerRequestContext, containerResponseContext) -> {
-                containerResponseContext.getHeaders().putSingle(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
-                containerResponseContext.setEntityStream(new ByteArrayInputStream("hello".getBytes()));
-            });
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new MessageBodyReader<String>() {
-                @Override
-                public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-                    result.append("K");
-                    return false;
-                }
+            @Override
+            public String readFrom(Class<String> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+                    MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
+                    throws IOException, WebApplicationException {
+                return null;
+            }
+        }, 1);
+        webTarget.register(new MessageBodyReader<String>() {
+            @Override
+            public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+                result.append("O");
+                return false;
+            }
 
-                @Override
-                public String readFrom(Class<String> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-                        MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
-                        throws IOException, WebApplicationException {
-                    return null;
-                }
-            }, 1);
-            webTarget.register(new MessageBodyReader<String>() {
-                @Override
-                public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-                    result.append("O");
-                    return false;
-                }
-
-                @Override
-                public String readFrom(Class<String> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-                        MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
-                        throws IOException, WebApplicationException {
-                    return null;
-                }
-            }, 0);
-            webTarget.request().get().readEntity(String.class);
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+            @Override
+            public String readFrom(Class<String> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+                    MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
+                    throws IOException, WebApplicationException {
+                return null;
+            }
+        }, 0);
+        webTarget.request().get().readEntity(String.class);
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testMessageBodyWriterPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
+    public void testMessageBodyWriterPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new MessageBodyWriter<String>() {
+            @Override
+            public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+                result.append("K");
+                return false;
+            }
 
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new MessageBodyWriter<String>() {
-                @Override
-                public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-                    result.append("K");
-                    return false;
-                }
+            @Override
+            public void writeTo(String t, Class<?> type, Type genericType, Annotation[] annotations,
+                    MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
+                    throws IOException, WebApplicationException {
+            }
+        }, 1);
+        webTarget.register(new MessageBodyWriter<String>() {
+            @Override
+            public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+                result.append("O");
+                return false;
+            }
 
-                @Override
-                public void writeTo(String t, Class<?> type, Type genericType, Annotation[] annotations,
-                        MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
-                        throws IOException, WebApplicationException {
-                }
-            }, 1);
-            webTarget.register(new MessageBodyWriter<String>() {
-                @Override
-                public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-                    result.append("O");
-                    return false;
-                }
-
-                @Override
-                public void writeTo(String t, Class<?> type, Type genericType, Annotation[] annotations,
-                        MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
-                        throws IOException, WebApplicationException {
-                }
-            }, 0);
-            webTarget.request().post(Entity.text("Hello")).close();
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+            @Override
+            public void writeTo(String t, Class<?> type, Type genericType, Annotation[] annotations,
+                    MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
+                    throws IOException, WebApplicationException {
+            }
+        }, 0);
+        webTarget.request().post(Entity.text("Hello")).close();
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testContextResolverPriorityOverride() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
+    public void testContextResolverPriorityOverride(@RequestTarget final WebTarget webTarget) {
+        webTarget.register(new ClientRequestFilter() {
+            @Context
+            Providers providers;
 
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            webTarget.register(new ClientRequestFilter() {
-                @Context
-                Providers providers;
-
-                @Override
-                public void filter(ClientRequestContext requestContext) throws IOException {
-                    providers.getContextResolver(String.class, MediaType.WILDCARD_TYPE).getContext(getClass());
-                }
-            });
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new ContextResolver<String>() {
-                @Override
-                public String getContext(Class<?> type) {
-                    result.append("O");
-                    return null;
-                }
-            }, 0);
-            webTarget.register(new ContextResolver<String>() {
-                @Override
-                public String getContext(Class<?> type) {
-                    result.append("K");
-                    return null;
-                }
-            }, 1);
-            webTarget.request().get().close();
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+            @Override
+            public void filter(ClientRequestContext requestContext) throws IOException {
+                providers.getContextResolver(String.class, MediaType.WILDCARD_TYPE).getContext(getClass());
+            }
+        });
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new ContextResolver<String>() {
+            @Override
+            public String getContext(Class<?> type) {
+                result.append("O");
+                return null;
+            }
+        }, 0);
+        webTarget.register(new ContextResolver<String>() {
+            @Override
+            public String getContext(Class<?> type) {
+                result.append("K");
+                return null;
+            }
+        }, 1);
+        webTarget.request().get().close();
+        Assertions.assertEquals("OK", result.toString());
     }
 
     @Test
-    public void testContextResolverPriorityOverride_2() {
-        Client client = ClientBuilder.newClient();
-        try {
-            fakeHttpServer.start();
+    public void testContextResolverPriorityOverride_2(@RequestTarget final WebTarget webTarget) {
+        webTarget.register(new ClientRequestFilter() {
+            @Context
+            Providers providers;
 
-            WebTarget webTarget = client.target("http://" + fakeHttpServer.getHostAndPort());
-            webTarget.register(new ClientRequestFilter() {
-                @Context
-                Providers providers;
-
-                @Override
-                public void filter(ClientRequestContext requestContext) throws IOException {
-                    providers.getContextResolver(String.class, MediaType.WILDCARD_TYPE).getContext(getClass());
-                }
-            });
-            StringBuilder result = new StringBuilder();
-            webTarget.register(new ContextResolver<String>() {
-                @Override
-                public String getContext(Class<?> type) {
-                    result.append("K");
-                    return null;
-                }
-            }, 1);
-            webTarget.register(new ContextResolver<String>() {
-                @Override
-                public String getContext(Class<?> type) {
-                    result.append("O");
-                    return null;
-                }
-            }, 0);
-            webTarget.request().get().close();
-            Assertions.assertEquals("OK", result.toString());
-        } finally {
-            client.close();
-        }
+            @Override
+            public void filter(ClientRequestContext requestContext) throws IOException {
+                providers.getContextResolver(String.class, MediaType.WILDCARD_TYPE).getContext(getClass());
+            }
+        });
+        StringBuilder result = new StringBuilder();
+        webTarget.register(new ContextResolver<String>() {
+            @Override
+            public String getContext(Class<?> type) {
+                result.append("K");
+                return null;
+            }
+        }, 1);
+        webTarget.register(new ContextResolver<String>() {
+            @Override
+            public String getContext(Class<?> type) {
+                result.append("O");
+                return null;
+            }
+        }, 0);
+        webTarget.request().get().close();
+        Assertions.assertEquals("OK", result.toString());
     }
 }
