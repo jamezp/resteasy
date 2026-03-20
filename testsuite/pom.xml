@@ -43,7 +43,15 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- This is required first to override the dependencies in the Arquillian BOM -->
+            <!-- This is required first to ensure these dependencies are used -->
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-dependencies</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- This is required next to override the dependencies in the Arquillian BOM -->
             <dependency>
                 <groupId>org.jboss.shrinkwrap.resolver</groupId>
                 <artifactId>shrinkwrap-resolver-bom</artifactId>

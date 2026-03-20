@@ -27,12 +27,24 @@ import java.lang.annotation.Target;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Injects a test {@link FakeHttpServer}.
+ * Indicates the test requires an HTTP server. The HTTP server returns 200 with an empty body for {@code HEAD} and
+ * {@code GET} requests. For a {@code POST} request, the request body is echoed back in the response with a status
+ * code of 200. Any other request method will result in a 405.
+ *
+ * <p>
+ * A special path of {@code /chunked} is registered for testing chunked transfer encoding. For {@code POST} requests
+ * to this path, the server validates both the {@code Transfer-Encoding} header and request body content. If the
+ * header equals {@code "chunked"} (case-insensitive) and the request body equals {@code "file entity"}, the server
+ * returns {@code "ok"} with status 200. If either condition fails, {@code "not ok"} is returned with status 400.
+ * </p>
+ * <p>
+ * If any other HTTP request method is sent to the {@code /chunked} path, status 405 is returned.
+ * </p>
  *
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
-@Target({ ElementType.FIELD, ElementType.PARAMETER })
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(FakeHttpServerExtension.class)
-public @interface TestServer {
+@ExtendWith(TestHttpServerExtension.class)
+public @interface RequiresHttpServer {
 }
