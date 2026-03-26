@@ -3,6 +3,7 @@ package org.jboss.resteasy.test.providers;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,12 +12,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 import jakarta.ws.rs.ext.Providers;
 
-import org.jboss.logging.Logger;
 import org.jboss.resteasy.client.jaxrs.internal.ClientConfiguration;
 import org.jboss.resteasy.core.ResteasyContext;
 import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.test.providers.resource.ProviderFactoryPrecedenceIntegerPlainTextWriter;
@@ -31,7 +32,7 @@ import org.junit.jupiter.api.Test;
  * @tpSince RESTEasy 3.0.14
  */
 public class MultipurtContainsJsonTest {
-    private static final LogMessages logger = Logger.getMessageLogger(LogMessages.class,
+    private static final LogMessages logger = LoggingSupport.getMessageLogger(MethodHandles.lookup(), LogMessages.class,
             MultipurtContainsJsonTest.class.getName());
     private static final Annotation[] EMPTY_ANNOTATION = new Annotation[0];
 

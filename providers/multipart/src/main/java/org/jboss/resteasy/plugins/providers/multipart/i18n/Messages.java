@@ -1,5 +1,6 @@
 package org.jboss.resteasy.plugins.providers.multipart.i18n;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Type;
 
 import jakarta.ws.rs.core.MediaType;
@@ -11,6 +12,7 @@ import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.resteasy.plugins.providers.multipart.AbstractMultipartWriter;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartOutput;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 
 /**
  *
@@ -21,7 +23,7 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartOutput;
  */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(id = 7500, value = "Could find no Content-Disposition header within part")
     String couldFindNoContentDispositionHeader();

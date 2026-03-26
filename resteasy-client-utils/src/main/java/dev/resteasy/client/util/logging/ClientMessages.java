@@ -21,7 +21,6 @@ package dev.resteasy.client.util.logging;
 
 import java.util.function.Supplier;
 
-import org.jboss.logging.Messages;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
@@ -31,7 +30,7 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "RESTEASYCLIENT")
 public interface ClientMessages {
 
-    ClientMessages MESSAGES = Messages.getBundle(ClientMessages.class);
+    ClientMessages MESSAGES = LoggingSupport.getBundle(ClientMessages.class);
 
     @Message(id = 1, value = "A value for %s is required.")
     Supplier<String> requiredValue(String name);

@@ -6,6 +6,7 @@
 package org.jboss.resteasy.cdi.i18n;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Type;
 import java.util.Set;
 
@@ -14,10 +15,11 @@ import jakarta.enterprise.inject.spi.Bean;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(id = 10500, value = "ProcessInjectionTarget.getAnnotatedType() returned null. As a result, property injection will not work.")
     String annotatedTypeNull();

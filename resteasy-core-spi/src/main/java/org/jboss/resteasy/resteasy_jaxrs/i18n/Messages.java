@@ -7,6 +7,7 @@ package org.jboss.resteasy.resteasy_jaxrs.i18n;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -36,7 +37,7 @@ import org.jboss.resteasy.spi.config.Threshold;
  */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     int BASE_ASYNC = 9500;
 

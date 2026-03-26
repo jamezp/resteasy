@@ -1,5 +1,6 @@
 package org.jboss.resteasy.resteasy_jaxrs.i18n;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AccessibleObject;
 import java.net.URL;
 import java.util.function.Consumer;
@@ -7,7 +8,6 @@ import java.util.function.Consumer;
 import jakarta.ws.rs.core.MediaType;
 
 import org.jboss.logging.BasicLogger;
-import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -25,7 +25,8 @@ import org.jboss.logging.annotations.Once;
  */
 @MessageLogger(projectCode = "RESTEASY")
 public interface LogMessages extends BasicLogger {
-    LogMessages LOGGER = Logger.getMessageLogger(LogMessages.class, LogMessages.class.getPackage().getName());
+    LogMessages LOGGER = LoggingSupport.getMessageLogger(MethodHandles.lookup(), LogMessages.class,
+            LogMessages.class.getPackage().getName());
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                                  FATAL                                                //
