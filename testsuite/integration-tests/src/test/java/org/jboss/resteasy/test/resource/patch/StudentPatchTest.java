@@ -39,6 +39,7 @@ public class StudentPatchTest {
     static final String PATCH_DEPLOYMENT = "Patch";
     static final String DISABLED_PATCH_DEPLOYMENT = "DisablePatch";
     static final String LEGACY_PATCH_DEPLOYMENT = "LegacyPatch";
+    static final String JACKSON_PATCH_DEPLOYMENT = "JacksonPatch";
 
     @BeforeAll
     public static void setup() {
@@ -68,7 +69,18 @@ public class StudentPatchTest {
         return TestUtil.finishContainerPrepare(war, contextParam, StudentResource.class, Student.class);
     }
 
-    @Deployment(name = DISABLED_PATCH_DEPLOYMENT, order = 3)
+    /**
+     * Deployment with Jackson explicitly set as the preferred JSON provider, which activates the Jackson PATCH filter.
+     */
+    @Deployment(name = JACKSON_PATCH_DEPLOYMENT, order = 3)
+    public static Archive<?> deployJacksonFilter() {
+        WebArchive war = TestUtil.prepareArchive(JACKSON_PATCH_DEPLOYMENT);
+        Map<String, String> contextParam = new HashMap<>();
+        contextParam.put(ResteasyContextParameters.RESTEASY_PREFER_JACKSON_OVER_JSONB, "true");
+        return TestUtil.finishContainerPrepare(war, contextParam, StudentResource.class, Student.class);
+    }
+
+    @Deployment(name = DISABLED_PATCH_DEPLOYMENT, order = 4)
     public static Archive<?> createDisablePatchFilterDeployment() {
         WebArchive war = TestUtil.prepareArchive(DISABLED_PATCH_DEPLOYMENT);
         Map<String, String> contextParam = new HashMap<>();
@@ -88,8 +100,14 @@ public class StudentPatchTest {
 
     @Test
     @OperateOnDeployment(LEGACY_PATCH_DEPLOYMENT)
-    public void testJSONPPatchStudent() throws Exception {
+    public void testJackson2PatchStudentLegacy() throws Exception {
         testPatch(LEGACY_PATCH_DEPLOYMENT);
+    }
+
+    @Test
+    @OperateOnDeployment(JACKSON_PATCH_DEPLOYMENT)
+    public void testJackson2PatchStudent() throws Exception {
+        testPatch(JACKSON_PATCH_DEPLOYMENT);
     }
 
     /**
@@ -101,8 +119,22 @@ public class StudentPatchTest {
      */
     @Test
     @OperateOnDeployment(LEGACY_PATCH_DEPLOYMENT)
-    public void testJSONPMergePatchStudent() throws Exception {
+    public void testJackson2MergePatchStudentLegacy() throws Exception {
         testMergePatch(LEGACY_PATCH_DEPLOYMENT);
+    }
+
+    /**
+     * Test JSON Merge patch with Jackson explicitly set as the preferred JSON provider via
+     * {@code resteasy.preferJacksonOverJsonB=true}.
+     * This covers the same scenario as {@link StudentJsonMergePatchTest#testJSONPMergePatchStudent()}
+     *
+     * @see <a href="https://tools.ietf.org/html/rfc7386">JSON Merge Patch</a>
+     * @see StudentJsonMergePatchTest for rest of the JSON Merge Patch test coverage
+     */
+    @Test
+    @OperateOnDeployment(JACKSON_PATCH_DEPLOYMENT)
+    public void testJackson2MergePatchStudent() throws Exception {
+        testMergePatch(JACKSON_PATCH_DEPLOYMENT);
     }
 
     @Test
