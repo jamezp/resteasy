@@ -94,6 +94,12 @@ public interface ResteasyContextParameters {
 
     String RESTEASY_PREFER_JACKSON_OVER_JSONB = "resteasy.preferJacksonOverJsonB";
     String RESTEASY_PATCH_FILTER_DISABLED = "resteasy.patchfilter.disabled";
+    /**
+     * @deprecated Use {@link #RESTEASY_PREFER_JACKSON_OVER_JSONB} to control which JSON provider is used for PATCH
+     *             filter processing. When {@link #RESTEASY_PREFER_JACKSON_OVER_JSONB} is {@code true}, Jackson is used;
+     *             otherwise Jakarta JSON Processing is used.
+     */
+    @Deprecated(forRemoval = true)
     String RESTEASY_PATCH_FILTER_LEGACY = "resteasy.patchfilter.legacy";
 
     String RESTEASY_STATISTICS_ENABLED = "resteasy.statistics.enabled";
