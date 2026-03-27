@@ -1,6 +1,7 @@
 package org.jboss.resteasy.client.jaxrs.i18n;
 
 import java.io.OutputStream;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.function.Supplier;
@@ -14,6 +15,7 @@ import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.logging.annotations.Param;
 import org.jboss.logging.annotations.Signature;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 
 /**
  *
@@ -24,7 +26,7 @@ import org.jboss.logging.annotations.Signature;
  */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(id = 4500, value = "You can only set one of LinkHeaderParam.rel() and LinkHeaderParam.title() for on {0}.{1}", format = Format.MESSAGE_FORMAT)
     String canOnlySetOneLinkHeaderParam(String className, String methodName);

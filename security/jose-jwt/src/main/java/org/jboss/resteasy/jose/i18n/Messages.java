@@ -1,10 +1,13 @@
 package org.jboss.resteasy.jose.i18n;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.resteasy.jose.jwe.CompressionAlgorithm;
 import org.jboss.resteasy.jose.jwe.EncryptionMethod;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 
 /**
  *
@@ -15,7 +18,7 @@ import org.jboss.resteasy.jose.jwe.EncryptionMethod;
  */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(id = 14000, value = "The algorithm of the shared symmetric key must be AES")
     String algorithmOfSharedSymmetricKey();

@@ -1,6 +1,7 @@
 package org.jboss.resteasy.test.providers;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 
 import jakarta.xml.bind.JAXBContext;
@@ -8,9 +9,9 @@ import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.PropertyException;
 import jakarta.xml.bind.annotation.XmlSchema;
 
-import org.jboss.logging.Logger;
 import org.jboss.resteasy.plugins.providers.jaxb.XmlNamespacePrefixMapper;
 import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 import org.jboss.resteasy.test.providers.resource.jaxbNameSpacePrefix.JaxbNameSpacePrefixItem;
 import org.jboss.resteasy.test.providers.resource.jaxbNameSpacePrefix.JaxbNameSpacePrefixItems;
 import org.jboss.resteasy.test.providers.resource.jaxbNameSpacePrefix.JaxbNameSpacePrefixPurchaseOrderType;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
  */
 public class JaxbNamespacePrefixTest {
 
-    private static final LogMessages logger = Logger.getMessageLogger(LogMessages.class,
+    private static final LogMessages logger = LoggingSupport.getMessageLogger(MethodHandles.lookup(), LogMessages.class,
             JaxbNamespacePrefixTest.class.getName());
 
     /**

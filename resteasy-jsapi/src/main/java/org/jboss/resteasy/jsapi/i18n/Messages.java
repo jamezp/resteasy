@@ -1,9 +1,12 @@
 package org.jboss.resteasy.jsapi.i18n;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.resteasy.core.ResourceMethodInvoker;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 
 /**
  *
@@ -14,7 +17,7 @@ import org.jboss.resteasy.core.ResourceMethodInvoker;
  */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(id = 11500, value = "Impossible to generate JSAPI for subresource returned by method {0}.{1} since return type is not a static JAXRS resource type", format = Format.MESSAGE_FORMAT)
     String impossibleToGenerateJsapi(String className, String methodName);

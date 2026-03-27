@@ -1,5 +1,7 @@
 package org.jboss.resteasy.plugins.providers.jaxb.i18n;
 
+import java.lang.invoke.MethodHandles;
+
 import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.PropertyException;
@@ -8,6 +10,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.Message.Format;
 import org.jboss.logging.annotations.MessageBundle;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 
 /**
  *
@@ -18,7 +21,7 @@ import org.jboss.logging.annotations.MessageBundle;
  */
 @MessageBundle(projectCode = "RESTEASY")
 public interface Messages {
-    Messages MESSAGES = org.jboss.logging.Messages.getBundle(Messages.class);
+    Messages MESSAGES = LoggingSupport.getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(id = 6500, value = "Collection wrapping failed, expected root element name of {0} got {1}", format = Format.MESSAGE_FORMAT)
     String collectionWrappingFailedLocalPart(String element, String localPart);

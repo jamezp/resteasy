@@ -1,5 +1,6 @@
 package org.jboss.resteasy.test.crypto;
 
+import java.lang.invoke.MethodHandles;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
@@ -10,8 +11,8 @@ import java.util.List;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 
-import org.jboss.logging.Logger;
 import org.jboss.resteasy.resteasy_jaxrs.i18n.LogMessages;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.LoggingSupport;
 import org.jboss.resteasy.security.doseta.DKIMSignature;
 import org.jboss.resteasy.security.doseta.DosetaKeyRepository;
 import org.jboss.resteasy.security.doseta.Verification;
@@ -28,7 +29,8 @@ import org.junit.jupiter.api.Test;
  * @tpSince RESTEasy 3.0.16
  */
 public class LocalTest {
-    protected static final LogMessages logger = Logger.getMessageLogger(LogMessages.class, LocalTest.class.getName());
+    protected static final LogMessages logger = LoggingSupport.getMessageLogger(MethodHandles.lookup(), LogMessages.class,
+            LocalTest.class.getName());
     public static KeyPair keys;
     public static DosetaKeyRepository repository;
     static final String filePath = TestUtil.getResourcePath(LocalTest.class, "LocalTest.jks");
