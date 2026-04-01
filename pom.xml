@@ -104,7 +104,7 @@
 
     <properties>
         <!-- Dependency versions -->
-        <version.org.jboss.arquillian.core>1.9.5.Final</version.org.jboss.arquillian.core>
+        <version.org.jboss.arquillian.core>1.10.1.Final</version.org.jboss.arquillian.core>
         <version.org.jboss.arquillian.jakarta>10.0.0.Final</version.org.jboss.arquillian.jakarta>
         <version.org.jboss.arquillian.container.arquillian-weld-embedded>3.0.2.Final</version.org.jboss.arquillian.container.arquillian-weld-embedded>
         <version.org.jboss.logging.jboss-logging-processor>3.0.4.Final</version.org.jboss.logging.jboss-logging-processor>
