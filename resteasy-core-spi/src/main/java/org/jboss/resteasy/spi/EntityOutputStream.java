@@ -258,6 +258,17 @@ public class EntityOutputStream extends OutputStream {
         }
     }
 
+    /**
+     * Creates an input stream, which handles deleting the file, for the file passed in.
+     *
+     * @param file the file to create input stream for
+     *
+     * @return an input stream for the content
+     */
+    protected static InputStream contentInputStream(final Path file) {
+        return new EntityInputStream(file);
+    }
+
     private OutputStream getDelegate(final int len) throws IOException {
         synchronized (lock) {
             if (file != null) {
@@ -387,10 +398,10 @@ public class EntityOutputStream extends OutputStream {
         }
     }
 
-    protected static class EntityInputStream extends InputStream {
+    private static class EntityInputStream extends InputStream {
         private final InputStream delegate;
 
-        public EntityInputStream(final Path file) {
+        private EntityInputStream(final Path file) {
             try {
                 this.delegate = Files.newInputStream(file, StandardOpenOption.DELETE_ON_CLOSE);
             } catch (IOException e) {
