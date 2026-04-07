@@ -889,4 +889,7 @@ public interface Messages {
 
     @Message(id = 5096, value = "Unable to find constructor with arguments [%s] or a no-arg constructor for type %s")
     IllegalStateException unableToFindConstructor(String args, String className);
+
+    @Message(id = 5097, value = "Deployment has either not been started or stopped. There are no executor services available.")
+    IllegalStateException executorNotAvailable();
 }
