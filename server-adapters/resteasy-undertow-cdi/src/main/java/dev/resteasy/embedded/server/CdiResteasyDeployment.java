@@ -35,19 +35,13 @@ import org.jboss.weld.environment.se.WeldContainer;
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
 class CdiResteasyDeployment extends DelegateResteasyDeployment implements ResteasyDeployment {
-    private final Weld weld;
+    private Weld weld;
     private final Object lock = new Object();
     private WeldContainer container;
     private ResteasyDeployment delegate;
 
-    @SuppressWarnings("unchecked")
     CdiResteasyDeployment() {
         super(null);
-        weld = new Weld("RESTEasy SE")
-                // Register these as bean defining annotations
-                .addBeanDefiningAnnotations(Path.class, Provider.class, ApplicationPath.class)
-                // Do not register the shutdown hook as stopping the server may execute in a separate shutdown hook.
-                .skipShutdownHook();
         delegate = new ResteasyDeploymentImpl();
     }
 
@@ -65,7 +59,10 @@ class CdiResteasyDeployment extends DelegateResteasyDeployment implements Restea
             final ResteasyDeployment newDelegate = newDelegate(delegate);
             delegate.stop();
             delegate = newDelegate;
-            weld.shutdown();
+            if (weld != null) {
+                weld.shutdown();
+                weld = null;
+            }
         }
     }
 
@@ -76,8 +73,16 @@ class CdiResteasyDeployment extends DelegateResteasyDeployment implements Restea
         }
     }
 
+    @SuppressWarnings("unchecked")
     ContainerInstance getContainer() {
         synchronized (lock) {
+            if (weld == null) {
+                weld = new Weld("RESTEasy SE")
+                        // Register these as bean defining annotations
+                        .addBeanDefiningAnnotations(Path.class, Provider.class, ApplicationPath.class)
+                        // Do not register the shutdown hook as stopping the server may execute in a separate shutdown hook.
+                        .skipShutdownHook();
+            }
             if (container == null || !container.isRunning()) {
                 container = weld.initialize();
             }

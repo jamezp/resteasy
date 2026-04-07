@@ -22,6 +22,8 @@ package org.jboss.resteasy.spi;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 import jakarta.ws.rs.core.Application;
 
@@ -474,6 +476,16 @@ public class DelegateResteasyDeployment implements ResteasyDeployment {
     @Override
     public void setStatisticsEnabled(final boolean statisticsEnabled) {
         getDelegate().setStatisticsEnabled(statisticsEnabled);
+    }
+
+    @Override
+    public ExecutorService getExecutorService() {
+        return getDelegate().getExecutorService();
+    }
+
+    @Override
+    public ScheduledExecutorService getScheduledExecutorService() {
+        return getDelegate().getScheduledExecutorService();
     }
 
     /**
