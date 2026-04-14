@@ -13,7 +13,7 @@
     <properties>
         <!-- Skip deploying tests -->
         <maven.deploy.skip>true</maven.deploy.skip>
-        <skipPublishing>${maven.deploy.skip}</skipPublishing>
+        <central.skipPublishing>${maven.deploy.skip}</central.skipPublishing>
     </properties>
 
     <dependencies>

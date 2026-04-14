@@ -34,7 +34,7 @@ Issues are kept in https://issues.redhat.com/browse/RESTEASY/[JIRA].
 
 == Build
 
-Currently, RESTEasy requires JDK 17+.
+Currently, RESTEasy requires JDK 11+.
 
 If you want to build the project without running the tests, you need to pull down a clone of the RESTEasy repository and
 run:
@@ -60,17 +60,31 @@ Read the link:./CONTRIBUTING.adoc[Contribution guidelines]
 
 == Releasing
 
-Releasing this project requires access to https://repository.jboss.org/nexust[JBoss Nexus].
+Releasing the project requires permission to deploy to Maven Central see https://central.sonatype.org/publish/requirements/[Maven Central Release Requirements].
+Once everything is setup, you simply need to run the `./release.sh` script. There are two required parameters:
 
-To perform a release ensure you're on the correct branch and that branch is up to date. Once done you can simply use
-the `release.sh` bash script.
+1. `-r` or `--release` which is the version you want to release
+2. `-d` or `--development` which is the next development version.
+
+By default, the release version cannot contain `SNAPSHOT` and the development version must contain `SNAPSHOT`.
+
+=== Example Release Command
 
 [source,bash]
 ----
-./release.sh -r 7.0.0.Final -d 7.0.1.Final-SNAPSHOT
+./release.sh --release 6.2.15.Final --development 6.2.16.Final-SNAPSHOT
 ----
 
-If this was successful, instructions will be printed on the console with the next set of instructions for processing.
+=== What the Release Script Does
+
+The `release.sh` script automates the entire release process:
+
+1. **Maven Release**: Executes `mvn release:prepare` and `release:perform` to build, tag, and deploy artifacts to Maven Central
+2. **GitHub Release**: Automatically creates a GitHub release with generated release notes (requires https://cli.github.com/[gh CLI])
+3. **Artifact Upload**: Uploads distribution ZIPs to the GitHub release
+4. **Documentation Publishing**: Automatically publishes documentation to https://github.com/resteasy/resteasy.github.io by invoking `./publish-docs.sh`
+
+All of these steps are automated. If successful, you'll see confirmation messages for each step:
 
 [source,base]
 ----
@@ -78,34 +92,54 @@ If this was successful, instructions will be printed on the console with the nex
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  20:14 min
-[INFO] Finished at: 2025-09-18T17:35:23-07:00
+[INFO] Total time:  14:17 min
+[INFO] Finished at: 2025-09-18T16:03:43-07:00
 [INFO] ------------------------------------------------------------------------
 
-Your release has been successful. Check the validation after 17:45:23 on https://repository.jboss.org/nexus.
-Once validation is successful, execute the following command:
-
-git checkout v6.2.13.Final
-mvn nxrm3:staging-move -Dmaven.repo.local="/tmp/m2/repository/resteasy"
-git checkout test
-git push upstream test
-git push upstream v6.2.13.Final
-
-gh release create --generate-notes --latest --verify-tag v6.2.13.Final
-gh release upload v6.2.13.Final /home/jperkins/projects/resteasy/resteasy/distribution/target/distribution/resteasy-6.2.13.Final-all.zip /home/jperkins/projects/resteasy/resteasy/distribution/src-distribution/target/distribution/resteasy-6.2.13.Final-src.zip
-
-You must also create a pull request to https://github.com/resteasy/resteasy.github.io with the documentation content.
+GitHub release created successfully.
+Release artifacts uploaded successfully.
+Publishing documentation:
+Documentation published successfully.
 ----
 
-IMPORTANT: If manually doing any of these steps it's important to enable the `release` profile with `-Prelease`.
+NOTE: The documentation publishing step creates a pull request to https://github.com/resteasy/resteasy.github.io automatically. You'll need to review and merge that PR to finalize the documentation update.
 
-=== Updating Documentation
+=== Additional Options
 
-The documentation repository can be found at https://github.com/resteasy/resteasy.github.io. When doing a release, there
-must also be a pull request sent to this repository to update the documentation. The documentation can be found in the
-`distribution/target/distribution/resteasy-*-all.zip` under the `docs` directory. Both the `javadocs` and `userguide`
-subdirectories should be copied for the documentation.
+* `--dry-run` - Executes the release process without pushing any changes (useful for testing)
+* `--prerelease` - Marks the GitHub release as a prerelease
+* `--notes-start-tag <tag>` - Specifies the starting tag for generating release notes
+* `--verbose` - Prints verbose output
+* `--force` - Allows SNAPSHOT in release version (not recommended)
 
-Follow the instructions on
-https://github.com/resteasy/resteasy.github.io/tree/main?tab=readme-ov-file#resteasy-documentation[the GitHub repository]
-for further details.
+=== Requirements
+
+* https://cli.github.com/[GitHub CLI (gh)] - Required for automated GitHub release creation and documentation PR
+* Maven Central credentials configured in `~/.m2/settings.xml`
+* Write access to the resteasy.github.io repository (for documentation publishing)
+
+=== Manual Release Steps
+
+If the automated process fails or you need to perform steps manually:
+
+IMPORTANT: When manually executing Maven commands, enable the `release` profile with `-Prelease` and the
+`central-release` profile with `-Pcentral-release`. These can be combined with `-Prelease,central-release`.
+
+Manual GitHub release:
+[source,bash]
+----
+gh release create --generate-notes --latest --verify-tag v6.2.15.Final
+gh release upload v6.2.15.Final distribution/target/distribution/resteasy-6.2.15.Final-all.zip \
+  distribution/src-distribution/target/distribution/resteasy-6.2.15.Final-src.zip
+----
+
+Manual documentation publishing:
+[source,bash]
+----
+./publish-docs.sh --version 6.2.15.Final \
+  --docs-repo ../resteasy.github.io \
+  --dist-zip distribution/target/distribution/resteasy-6.2.15.Final-all.zip
+----
+
+The `publish-docs.sh` script extracts documentation from the distribution ZIP, creates a branch in the documentation
+repository, commits the changes, and creates a pull request automatically.
