@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>50</version>
+        <version>52</version>
         <relativePath />
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -73,6 +73,10 @@
     </issueManagement>
 
     <properties>
+        <jdk.min.version>17</jdk.min.version>
+        <!-- Compile to Java 17 -->
+        <maven.compiler.release>17</maven.compiler.release>
+
         <version.com.fasterxml.classmate>1.7.3</version.com.fasterxml.classmate>
         <version.com.fasterxml.jackson>2.21.2</version.com.fasterxml.jackson>
         <version.com.google.guava>33.4.8-jre</version.com.google.guava>
@@ -139,22 +143,24 @@
         <version.asyncutil>0.1.0</version.asyncutil>
 
         <!-- maven-release-plugin configuration -->
-        <version.central.publishing.maven.plugin>0.9.0</version.central.publishing.maven.plugin>
         <autoVersionSubmodules>true</autoVersionSubmodules>
-        <preparationProfiles>release,gpg-sign</preparationProfiles>
+        <preparationGoals>clean install javadoc:aggregate-no-fork site</preparationGoals>
+        <preparationProfiles>central-release</preparationProfiles>
         <releaseProfiles>${preparationProfiles}</releaseProfiles>
         <signTag>true</signTag>
         <tagNameFormat>v@{project.version}</tagNameFormat>
-        <arguments>-DskipTests</arguments>
-        <!-- Do not push changes by default when using the maven-release-plugin:prepare -->
+        <arguments>-DskipTests -DpushChanges=${pushChanges} -Dcentral.autoPublish=${central.autoPublish}</arguments>
+        <!-- Push changes by default when using the maven-release-plugin:prepare -->
         <pushChanges>true</pushChanges>
         <!-- Use the local directory when using perform -->
         <localCheckout>true</localCheckout>
         <!-- Maven Central properties -->
-        <repo.sonatype.url>https://central.sonatype.com</repo.sonatype.url>
-        <sonatype.server.id>central</sonatype.server.id>
-        <autoPublish>true</autoPublish>
-        <waitUntil>validated</waitUntil>
+        <central.sonatype.url>https://central.sonatype.com</central.sonatype.url>
+        <central.serverId>central</central.serverId>
+        <central.deploymentName>resteasy-${project.version}</central.deploymentName>
+        <central.autoPublish>true</central.autoPublish>
+        <central.waitUntil>validated</central.waitUntil>
+        <central.skipPublishing>false</central.skipPublishing>
     </properties>
 
     <dependencyManagement>
@@ -845,49 +851,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>${sonatype.server.id}</id>
-                    <url>${repo.sonatype.url}</url>
-                </snapshotRepository>
-                <repository>
-                    <id>${sonatype.server.id}</id>
-                    <url>${repo.sonatype.url}</url>
-                </repository>
-            </distributionManagement>
-
-            <build>
-                <plugins>
-                    <!-- Semantically ordered -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <configuration>
-                            <rules>
-                                <requireReleaseDeps>
-                                    <message>No Snapshots Allowed!</message>
-                                </requireReleaseDeps>
-                            </rules>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>${version.central.publishing.maven.plugin}</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <publishingServerId>${sonatype.server.id}</publishingServerId>
-                            <autoPublish>${autoPublish}</autoPublish>
-                            <waitUntil>${waitUntil}</waitUntil>
-                            <deploymentName>org.jboss.resteasy-${project.version}</deploymentName>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
