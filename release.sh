@@ -152,7 +152,7 @@ fi
 # Find the expected Server ID
 # We temporarily disable set -e here because mvn might fail if args are bad, and we want to capture that
 set +e
-SERVER_ID=$(mvn help:evaluate -Dexpression=nexus.serverId -q -DforceStdout "${MAVEN_ARGS[@]}" 2>/dev/null | sed 's/^\[INFO\] \[stdout\] //')
+SERVER_ID=$(./mvnw help:evaluate -Dexpression=central.serverId -q -DforceStdout "${MAVEN_ARGS[@]}" 2>/dev/null | sed 's/^\[INFO\] \[stdout\] //')
 RET_CODE=$?
 set -e
 
@@ -165,7 +165,7 @@ if [ -z "${SERVER_ID}" ]; then
 fi
 
 # Check the settings to ensure a server defined with that value
-if ! mvn help:effective-settings 2>/dev/null | grep -q "<id>${SERVER_ID}</id>"; then
+if ! ./mvnw help:effective-settings 2>/dev/null | grep -q "<id>${SERVER_ID}</id>"; then
     failNoHelp "A server with the id of \"${SERVER_ID}\" was not found in your settings.xml file."
 fi
 
@@ -204,7 +204,7 @@ if [ -d "${LOCAL_REPO}" ]; then
 
     # Delete directories associated with this project
     set +e
-    PROJECT_PATH="$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout "${MAVEN_ARGS[@]}" 2>/dev/null)"
+    PROJECT_PATH="$(./mvnw help:evaluate -Dexpression=project.groupId -q -DforceStdout "${MAVEN_ARGS[@]}" 2>/dev/null)"
     RET_CODE=$?
     set -e
 
@@ -223,9 +223,9 @@ fi
 # ============================================================================
 
 # Create the command as an array
-CMD=(mvn clean release:clean release:prepare release:perform)
+CMD=(./mvnw clean release:clean release:prepare release:perform)
 CMD+=("-Dmaven.repo.local=${LOCAL_REPO}")
-CMD+=("-Prelease,cloud-tests")
+CMD+=("-Prelease,central-release,cloud-tests")
 CMD+=("-DdevelopmentVersion=${DEVEL_VERSION}")
 CMD+=("-DreleaseVersion=${RELEASE_VERSION}")
 CMD+=("-Dtag=${TAG_NAME}")
