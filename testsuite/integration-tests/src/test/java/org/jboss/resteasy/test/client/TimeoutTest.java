@@ -1,6 +1,8 @@
 package org.jboss.resteasy.test.client;
 
+import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.ws.rs.GET;
@@ -67,7 +69,12 @@ public class TimeoutTest extends ClientTestBase {
             target.queryParam("sleep", "5").request().get();
             Assertions.fail("The request didn't timeout as expected");
         } catch (ProcessingException e) {
-            Assertions.assertEquals(e.getCause().getClass(), SocketTimeoutException.class, "Expected SocketTimeoutException");
+            final Throwable cause = e.getCause();
+            Assertions.assertInstanceOf(IOException.class, cause);
+            // Allow for both the Apache Client and the Java HTTP Client to be used
+            Assertions.assertTrue((cause instanceof SocketTimeoutException) || (cause instanceof HttpTimeoutException),
+                    () -> String.format("Expected a timeout exception, but got %s: %s", cause.getClass().getName(),
+                            cause.getMessage()));
         }
 
         TimeoutResourceInterface proxy = client.target(generateURL("")).proxy(TimeoutResourceInterface.class);
@@ -75,7 +82,12 @@ public class TimeoutTest extends ClientTestBase {
             proxy.get(5);
             Assertions.fail("The request didn't timeout as expected when using client proxy");
         } catch (ProcessingException e) {
-            Assertions.assertEquals(e.getCause().getClass(), SocketTimeoutException.class, "Expected SocketTimeoutException");
+            final Throwable cause = e.getCause();
+            Assertions.assertInstanceOf(IOException.class, cause);
+            // Allow for both the Apache Client and the Java HTTP Client to be used
+            Assertions.assertTrue((cause instanceof SocketTimeoutException) || (cause instanceof HttpTimeoutException),
+                    () -> String.format("Expected a timeout exception, but got %s: %s", cause.getClass().getName(),
+                            cause.getMessage()));
         }
         clientengine.close();
     }

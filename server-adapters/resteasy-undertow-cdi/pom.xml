@@ -170,4 +170,22 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>resteasy-http-client-engine</id>
+            <activation>
+                <property>
+                    <name>jdk.client</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.resteasy</groupId>
+                    <artifactId>resteasy-http-client-engine</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
 </project>

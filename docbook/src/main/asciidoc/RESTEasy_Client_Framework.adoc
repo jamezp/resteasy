@@ -58,8 +58,7 @@ request.setChunked(b);
 Note that `org.jboss.resteasy.client.jaxrs.internal.ClientInvocationBuilder`, unlike `jakarta.ws.rs.client.Invocation.Builder`, is a RESTEasy class. 
 
 NOTE: The ability to send in chunked mode depends on the underlying transport layer; in particular, it depends on which implementation of `org.jboss.resteasy.client.jaxrs.ClientHttpEngine` is being used.
-Currently, only the default implementation, `ApacheHttpClient43Engine`, supports chunked mode.
-See Section <<_transport_layer,Apache HTTP Client 4.x and other backends>> for more information. 
+Both the JDK HTTP Client engine and Apache HTTP Client engines support chunked mode. See Section <<_transport_layer,HTTP Client Engines>> for more information.
 
 [NOTE]
 ====
@@ -423,13 +422,150 @@ It is generally possible to share an interface between the client and server.
 In this scenario, just have the {spec-name} services implement an annotated interface and then reuse that same interface to create client proxies to invoke on the client-side.
 
 [[_transport_layer]]
-=== Apache HTTP Client 4.x and other backends
+=== HTTP Client Engines
 
 [WARNING]
 ====
 The Apache HTTP Client support is deprecated in RESTEasy. The exposed API's will eventually be removed. However, it's
 still the default client implementation as we prepare for a replacement backing HTTP client.
 ====
+
+=== JDK HTTP Client Engine
+
+Starting with RESTEasy 7.0, the JDK's built-in `java.net.http.HttpClient` is available as an optional HTTP client engine through the `resteasy-http-client-engine` dependency.
+
+==== Overview
+
+The JDK HTTP Client engine provides a zero-dependency HTTP client implementation with native HTTP/2 support. Unlike the Apache HTTP Client, it requires no external libraries since it uses the HTTP client built into the Java platform (Java 11+).
+
+==== Maven Dependency
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.jboss.resteasy</groupId>
+  <artifactId>resteasy-http-client-engine</artifactId>
+  <version>${version.resteasy}</version>
+</dependency>
+----
+
+Once this dependency is added to your project, RESTEasy will automatically use the JDK HTTP Client engine via the `ServiceLoader` mechanism. No code changes are required - the engine is discovered and used automatically.
+
+==== Features
+
+The JDK HTTP Client engine supports:
+
+* HTTP/1.1 and HTTP/2 with automatic protocol negotiation
+* Asynchronous request execution with `CompletableFuture`
+* Connection pooling and keep-alive (automatic)
+* Chunked transfer encoding (HTTP/1.1 only)
+* Cookie management
+* Proxy support
+* SNI (Server Name Indication)
+* Redirect handling with security (prevents HTTPS→HTTP downgrades)
+* Zero external dependencies
+
+==== Limitations
+
+The JDK HTTP Client engine has the following known limitations:
+
+* **Custom HostnameVerifier**: Not supported. The JDK HttpClient performs hostname verification internally and does not expose an API to customize it. If you require custom hostname verification, use the default engine instead.
+
+* **Per-URI SSLContext without ClientConfigProvider**: The standard client configuration only supports a single `SSLContext` for all requests. However, see the section below on per-URI SSL contexts for advanced usage.
+
+* **Connection idle timeout**: Cannot be explicitly configured. The HttpClient manages connection pooling and keep-alive internally.
+
+==== Per-URI SSL Contexts
+
+When a `ClientConfigProvider` is configured to provide per-URI SSL contexts, the JDK HTTP Client engine automatically switches to a special mode that creates a new `HttpClient` instance for each request with the appropriate SSL context.
+
+WARNING: Creating a new `HttpClient` per request has significant performance implications: no connection pooling between requests, initialization overhead per request (~10-50ms), and increased memory allocation. For high-throughput scenarios requiring per-URI SSL contexts, consider using the default engine which supports this feature more efficiently.
+
+Example of configuring per-URI SSL contexts:
+
+[source,java]
+----
+public class MyClientConfigProvider implements ClientConfigProvider {
+  @Override
+  public SSLContext getSSLContext(URI uri) {
+      // Return different SSLContext based on the target URI
+      if ("api.example.com".equals(uri.getHost())) {
+          return createExampleApiSSLContext();
+      }
+      return SSLContext.getDefault();
+  }
+}
+----
+
+Register the provider via `META-INF/services/org.jboss.resteasy.client.jaxrs.spi.ClientConfigProvider` or programmatically.
+
+==== Comparison with Apache HTTP Client
+
+[cols="3,2,2", options="header"]
+|===
+| Feature
+| JDK HTTP Client
+| Default HTTP Client
+
+| External Dependencies
+| None (built into JDK)
+| Requires Apache libraries
+
+| HTTP/2 Support
+| ✓ Native
+| ✗ Not Supported
+
+| Custom HostnameVerifier
+| ✗ Not supported
+| ✓ Supported
+
+| Per-URI SSL (efficient)
+| ✗ Performance penalty
+| ✓ Efficient support
+
+| Connection Pooling
+| ✓ Automatic
+| ✓ Configurable
+
+| Async Requests
+| ✓ CompletableFuture
+| ✓ Supported
+
+| Virtual Thread Compatible
+| ✓ Fully compatible
+| ✓ Compatible (with proper config)
+
+|===
+
+==== When to Use
+
+**Use the JDK HTTP Client engine when:**
+
+* You want zero external dependencies
+* You need HTTP/2 support
+* Standard SSL configuration is sufficient
+* You want a simple, lightweight client
+
+==== Example Usage
+
+The JDK HTTP Client engine is used automatically when the `resteasy-http-client-engine` dependency is present:
+
+[source,java]
+----
+// Standard Jakarta REST Client API usage
+Client client = ClientBuilder.newBuilder()
+  .connectTimeout(10, TimeUnit.SECONDS)
+  .readTimeout(30, TimeUnit.SECONDS)
+  .followRedirects(true)
+  .build();
+
+WebTarget target = client.target("https://api.example.com/resource");
+Response response = target.request().get();
+----
+
+The JDK HTTP Client is automatically selected and used without any additional configuration.
+
+=== Apache HTTP Client Engine (Deprecated)
 
 Network communication between the client and server is handled by default in RESTEasy.
 The interface between the RESTEasy Client Framework and the network is defined by RESTEasy's `ClientHttpEngine` interface.
@@ -448,28 +584,39 @@ IMPORTANT: This project has moved to a new repository https://github.com/resteas
 
 `ReactorNettyClientHttpEngine` is built on top of __Reactor Netty__, which provides a non-blocking HTTP client based on Netty framework. 
 
-[cols="1,1", frame="topbot", options="header"]
+[cols="1,1,1", frame="topbot", options="header"]
 |===
 | RESTEasy ClientHttpEngine implementations
-|
+| Description
+| Status
 
-| ApacheHttpClient43Engine (deprecated)
+| JavaClientHttpEngine
+| Uses JDK's java.net.http.HttpClient
+| Current
+
+| ApacheHttpClient43Engine
 | Uses HttpComponents HttpClient 4.3+
+| Deprecated
 
-| ApacheHttpAsyncClient4Engine (deprecated)
+| ApacheHttpAsyncClient4Engine
 | Uses HttpComponents HttpAsyncClient
+| Deprecated
 
 | JettyClientEngine
 | Uses Eclipse Jetty
+| Current
 
 | ReactorNettyClientHttpEngine
 | Uses Reactor Netty
+| Current
 
 | VertxClientHttpEngine
 | Uses Eclipse Vert.x
+| Current
 
 | URLConnectionEngine
 | Uses java.net.HttpURLConnection
+| Current
 |===
 
 The RESTEasy Client Framework can also be customized.

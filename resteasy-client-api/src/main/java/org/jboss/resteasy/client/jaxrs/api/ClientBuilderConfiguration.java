@@ -137,4 +137,13 @@ public interface ClientBuilderConfiguration {
      * @return the configuration
      */
     Configuration configuration();
+
+    /**
+     * Returns the default buffer size for the response. The default is {@code 8KB}
+     *
+     * @return the default response buffer size
+     */
+    default int responseBufferSize() {
+        return 8192;
+    }
 }

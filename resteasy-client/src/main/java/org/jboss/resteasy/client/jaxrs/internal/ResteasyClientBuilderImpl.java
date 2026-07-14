@@ -676,7 +676,12 @@ public class ResteasyClientBuilderImpl extends ResteasyClientBuilder {
         return followRedirects;
     }
 
-    private ContextualExecutorService getExecutorService() {
+    /**
+     * Returns the executor service to for the client.
+     *
+     * @return the executor service to use
+     */
+    ContextualExecutorService getExecutorService() {
         if (asyncExecutor != null) {
             return ContextualExecutors.wrap(asyncExecutor, !cleanupExecutor);
         }

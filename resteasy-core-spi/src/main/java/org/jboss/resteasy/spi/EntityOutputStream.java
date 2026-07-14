@@ -220,7 +220,7 @@ public class EntityOutputStream extends OutputStream {
      *
      * @throws IOException if an error occurs creating the input stream
      */
-    public InputStream toInputStream() throws IOException {
+    public EntityInputStream toInputStream() throws IOException {
         checkExported(Messages.MESSAGES.alreadyExported());
         contentLock.lock();
         try {
@@ -229,7 +229,7 @@ public class EntityOutputStream extends OutputStream {
             if (file != null) {
                 return new EntityInputStream(file);
             }
-            return new ByteArrayInputStream(getAndClearMemory());
+            return new EntityInputStream(getAndClearMemory());
         } finally {
             contentLock.unlock();
         }
@@ -434,11 +434,16 @@ public class EntityOutputStream extends OutputStream {
         }
     }
 
-    private static class EntityInputStream extends InputStream {
+    /**
+     * An input stream to read a REST entity.
+     */
+    public static class EntityInputStream extends InputStream {
         private final InputStream delegate;
+        private final long size;
 
         private EntityInputStream(final Path file) {
             try {
+                this.size = Files.size(file);
                 this.delegate = Files.newInputStream(file, StandardOpenOption.DELETE_ON_CLOSE);
             } catch (IOException e) {
                 try {
@@ -447,6 +452,11 @@ public class EntityOutputStream extends OutputStream {
                 }
                 throw new UncheckedIOException(e);
             }
+        }
+
+        private EntityInputStream(final byte[] bytes) {
+            this.delegate = new ByteArrayInputStream(bytes);
+            this.size = bytes.length;
         }
 
         @Override
@@ -512,6 +522,15 @@ public class EntityOutputStream extends OutputStream {
         @Override
         public long transferTo(final OutputStream out) throws IOException {
             return delegate.transferTo(out);
+        }
+
+        /**
+         * The size, in bytes, of the entity.
+         *
+         * @return the size of the entity in bytes
+         */
+        public long size() {
+            return size;
         }
     }
 }

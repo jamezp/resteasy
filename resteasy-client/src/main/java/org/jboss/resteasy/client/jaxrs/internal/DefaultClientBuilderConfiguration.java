@@ -59,6 +59,7 @@ class DefaultClientBuilderConfiguration implements ClientBuilderConfiguration {
     private final ExecutorService executorService;
     private final ScheduledExecutorService scheduledExecutorService;
     private final Configuration configuration;
+    private final int responseBufferSize;
 
     DefaultClientBuilderConfiguration(final ResteasyClientBuilderImpl builder) {
         this.connectionTTL = builder.getConnectionTTL(TimeUnit.MILLISECONDS);
@@ -71,9 +72,10 @@ class DefaultClientBuilderConfiguration implements ClientBuilderConfiguration {
         this.readTimeout = builder.getReadTimeout(TimeUnit.MILLISECONDS);
         this.connectionTimeout = builder.getConnectionTimeout(TimeUnit.MILLISECONDS);
         this.isFollowRedirect = builder.isFollowRedirects();
-        this.executorService = builder.asyncExecutor;
+        this.executorService = builder.getExecutorService();
         this.scheduledExecutorService = builder.scheduledExecutorService;
         this.configuration = builder.getConfiguration();
+        this.responseBufferSize = builder.getResponseBufferSize();
     }
 
     static DefaultClientBuilderConfiguration create(final ResteasyClientBuilderImpl builder) {
@@ -143,6 +145,11 @@ class DefaultClientBuilderConfiguration implements ClientBuilderConfiguration {
     @Override
     public Configuration configuration() {
         return configuration;
+    }
+
+    @Override
+    public int responseBufferSize() {
+        return responseBufferSize <= 0 ? 8192 : responseBufferSize;
     }
 
     private SSLContext resolveSslContext(final ResteasyClientBuilderImpl resteasyClientBuilder) {
