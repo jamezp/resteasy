@@ -67,6 +67,7 @@
         <module>resteasy-core</module>
         <module>resteasy-client-api</module>
         <module>resteasy-client</module>
+        <module>http-client-engine</module>
         <module>providers</module>
         <module>security</module>
         <module>resteasy-links</module>

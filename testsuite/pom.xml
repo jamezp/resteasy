@@ -411,6 +411,27 @@
         </profile>
 
         <profile>
+            <id>resteasy-http-client-engine</id>
+            <activation>
+                <property>
+                    <name>jdk.client</name>
+                </property>
+            </activation>
+            <properties>
+                <!-- MBean support as it was removed from Jakarta EE 11 and some tests do not work without the Apache HTTP Client -->
+                <additional.surefire.excluded.groups>managed-bean-support-required,requires-apache-client</additional.surefire.excluded.groups>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.resteasy</groupId>
+                    <artifactId>resteasy-http-client-engine</artifactId>
+                    <version>${project.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>skip-wildfly-provisioning</id>
             <activation>
                 <property>
